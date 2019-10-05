@@ -14,7 +14,7 @@ object Repository {
     if (!isInitialized(path)) {
 
       // SGit path for the folder structure : path/.sgit/
-      val pathSGit = path + File.separator +  ".sgit" + File.separator
+      val pathSGit = path + File.separator + ".sgit" + File.separator
 
       // Make .sgit directory
       new File(pathSGit).mkdir()
@@ -35,26 +35,15 @@ object Repository {
   def isInitialized(path: String): Boolean = new File(path + File.separator + ".sgit").exists()
 
   /* Returns true if the given path contains INDEX file */
-  def hasIndexFile(path: String): Boolean = new File(path +  ".sgit" + File.separator + "INDEX").exists()
+  def hasIndexFile(path: String): Boolean = new File(path + ".sgit" + File.separator + "INDEX").exists()
 
   /* Returns the path containing .sgit folder if exists,
      else returns None if the given path in parameter is not in a SGit repository
   */
   def getPathSGit(path: String): Option[String] = {
-    @tailrec
-    def loop(currentPath: String): Option[String] = {
-
-      if (currentPath.isEmpty)
-        None
-      else if (isInitialized(currentPath))
-        Some(currentPath)
-      else {
-        val pathArray = currentPath.split(File.separator)
-        val parentPath = pathArray.take(pathArray.length - 1).mkString(File.separator)
-        loop(parentPath)
-      }
-    }
-    return loop(path)
+    if (path.isEmpty) None
+    else if (isInitialized(path)) Some(path)
+    else getPathSGit(new File(path).getParentFile.getAbsolutePath)
   }
 
   /*
@@ -62,8 +51,13 @@ object Repository {
   For the first add execution, we have to create INDEX file in .sgit
    */
   def add(parameter: String, path: String): Unit = {
-    if (!hasIndexFile(path)) {
-      new File(path + File.separator +  ".sgit" + File.separator + "INDEX").createNewFile()
+
+    val pathSGit = getPathSGit(path)
+
+    if (pathSGit.isDefined && !hasIndexFile(pathSGit.get)) {
+      new File(pathSGit + File.separator + ".sgit" + File.separator + "INDEX").createNewFile()
     }
+
+
   }
 }

@@ -1,0 +1,17 @@
+# Scala
+*.class
+*.log
+
+# Sbt
+dist/*
+target/
+lib_managed/
+src_managed/
+project/boot/
+project/plugins/project/
+.history
+.cache
+.lib/
+
+# SGit repo
+.sgit

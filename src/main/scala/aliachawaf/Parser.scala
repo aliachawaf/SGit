@@ -31,16 +31,30 @@ object Parser extends App {
       cmd("init")
         .action((_, c) => c.copy(mode = "init"))
         .text("create a sgit repository"),
+      cmd("add")
+        .action((_, c) => c.copy(mode = "add"))
+        .text("adds the given files to the stage")
+        .children(
+          arg[File]("<file>...")
+            .unbounded()
+            .optional()
+            .action((x, c) => c.copy(files = c.files :+ x))
+            .text("file to add to stage")
+        ),
     )
   }
+
+  val currentDirectory = System.getProperty("user.dir")
 
   // OParser.parse returns Option[app.Config]
   OParser.parse(parser1, args, Config()) match {
     case Some(config) =>
       config.mode match {
         case "init" => {
-          val currentDirectory = System.getProperty("user.dir")
           Repository.initialize(currentDirectory)
+        }
+        case "add" => {
+          Index.add(config.files, currentDirectory)
         }
         case _ =>
           printNotFound(config.mode)
@@ -48,6 +62,7 @@ object Parser extends App {
     case _ =>
     // arguments are bad, error message will have been displayed
   }
+
 
   // Utils _ Printing methods
   def printNotFound(command: String): Unit = println(command + ": command not found.")

@@ -2,7 +2,6 @@ package aliachawaf
 
 import java.io.File
 import util.FileUtil
-import scala.annotation.tailrec
 
 class Repository(path: String)
 
@@ -20,7 +19,7 @@ object Repository {
       new File(pathSGit).mkdir()
 
       // Add folders in .sgit
-      val folders = List("branches", "trees", "blobs", "tags", "commits")
+      val folders = List("branches", "tags", "objects")
       folders.foreach(folder => new File(pathSGit + folder).mkdir())
 
       // Add HEAD file in .sgit
@@ -43,21 +42,11 @@ object Repository {
   def getPathSGit(path: String): Option[String] = {
     if (path.isEmpty) None
     else if (isInitialized(path)) Some(path)
-    else getPathSGit(new File(path).getParentFile.getAbsolutePath)
-  }
+    else {
+      val parentFile = new File(path).getParentFile
+      if (!parentFile.getName.isEmpty) getPathSGit(parentFile.getAbsolutePath)
+      else getPathSGit("")
 
-  /*
-  Add a file to the stage in index file.
-  For the first add execution, we have to create INDEX file in .sgit
-   */
-  def add(parameter: String, path: String): Unit = {
-
-    val pathSGit = getPathSGit(path)
-
-    if (pathSGit.isDefined && !hasIndexFile(pathSGit.get)) {
-      new File(pathSGit + File.separator + ".sgit" + File.separator + "INDEX").createNewFile()
     }
-
-
   }
 }

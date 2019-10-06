@@ -1,6 +1,8 @@
 package aliachawaf.util
 
-import java.io.{BufferedWriter, File, FileOutputStream}
+import java.io.{File, FileOutputStream}
+import scala.annotation.tailrec
+import scala.util.matching.Regex
 
 object FileUtil {
 
@@ -19,5 +21,26 @@ object FileUtil {
     val f = new File(path)
     f.createNewFile()
     FileUtil.writeFile(f, content.getBytes.toList)
+  }
+
+  def recursiveListFiles(f: File, r: Regex): Array[File] = {
+    val these = f.listFiles
+    val good = these.filter(f => r.findFirstIn(f.getName).isDefined)
+    good ++ these.filter(_.isDirectory).flatMap(recursiveListFiles(_, r))
+  }
+
+  def getAllFiles(files: Seq[File], directory: String): List[String] = {
+    @tailrec
+    def loop(listAcc: List[String], files: Seq[File]): List[String] = {
+      files match {
+        case Nil => listAcc
+        case head :: tail => {
+          val list = FileUtil.recursiveListFiles(new File(directory), head.getName.r).filter(f => f.isFile).map(f => f.getAbsolutePath)
+          loop(listAcc ++ list, tail)
+        }
+      }
+    }
+
+    return loop(List[String](), files)
   }
 }

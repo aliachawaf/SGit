@@ -1,14 +1,16 @@
 package aliachawaf.util
 
 import java.io.{File, FileOutputStream}
+import java.nio.file.{Files, Paths, StandardCopyOption}
+
 import scala.annotation.tailrec
 import scala.util.matching.Regex
 
 object FileUtil {
 
   /* Write in the given file the given content */
-  def writeFile(file: File, data: Seq[Byte]): Unit = {
-    val f = new FileOutputStream(file)
+  def writeFile(file: File, data: Seq[Byte], append: Boolean): Unit = {
+    val f = new FileOutputStream(file, append)
     try {
       f.write(data.toArray)
     } finally {
@@ -20,7 +22,7 @@ object FileUtil {
   def createNewFile(path: String, content: String): Unit = {
     val f = new File(path)
     f.createNewFile()
-    FileUtil.writeFile(f, content.getBytes.toList)
+    FileUtil.writeFile(f, content.getBytes.toList, true)
   }
 
   def recursiveListFiles(f: File, r: Regex): Array[File] = {
@@ -29,7 +31,7 @@ object FileUtil {
     good ++ these.filter(_.isDirectory).flatMap(recursiveListFiles(_, r))
   }
 
-  def getAllFiles(files: Seq[File], directory: String): List[String] = {
+  def getFilePaths(files: Seq[File], directory: String): List[String] = {
     @tailrec
     def loop(listAcc: List[String], files: Seq[File]): List[String] = {
       files match {
@@ -40,7 +42,6 @@ object FileUtil {
         }
       }
     }
-
-    return loop(List[String](), files)
+    loop(List[String](), files)
   }
 }

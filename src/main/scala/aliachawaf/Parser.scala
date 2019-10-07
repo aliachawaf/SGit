@@ -54,7 +54,11 @@ object Parser extends App {
           Repository.initialize(currentDirectory)
         }
         case "add" => {
-          Index.add(config.files, currentDirectory)
+          if (Repository.isInitialized(currentDirectory) && Repository.getPathSGit(currentDirectory).isDefined) {
+            Index.add(config.files, currentDirectory)
+          } else {
+            // TO DO print NOT SGIT REPO
+          }
         }
         case _ =>
           printNotFound(config.mode)

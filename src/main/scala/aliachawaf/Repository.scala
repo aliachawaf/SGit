@@ -33,20 +33,22 @@ object Repository {
   /* Returns true if the given repository is already initialized. */
   def isInitialized(path: String): Boolean = new File(path + File.separator + ".sgit").exists()
 
+  /* Returns true if the path is in a SGit repository  */
+  def isInRepository(): Boolean = Repository.getRepoPath(System.getProperty("user.dir")).isDefined
+
   /* Returns true if the given path contains INDEX file */
   def hasIndexFile(path: String): Boolean = new File(path + ".sgit" + File.separator + "INDEX").exists()
 
   /* Returns the path containing .sgit folder if exists,
      else returns None if the given path in parameter is not in a SGit repository
   */
-  def getPathSGit(path: String): Option[String] = {
+  def getRepoPath(path: String): Option[String] = {
     if (path.isEmpty) None
     else if (isInitialized(path)) Some(path)
     else {
       val parentFile = new File(path).getParentFile
-      if (!parentFile.getName.isEmpty) getPathSGit(parentFile.getAbsolutePath)
-      else getPathSGit("")
-
+      if (!parentFile.getName.isEmpty) getRepoPath(parentFile.getAbsolutePath)
+      else getRepoPath("")
     }
   }
 }

@@ -3,8 +3,7 @@ package aliachawaf
 import java.io.File
 
 import aliachawaf.Repository.{getRepoPath, hasIndexFile}
-import aliachawaf.objects.SGitObject
-import aliachawaf.util.FileUtil
+import aliachawaf.util.{FileUtil, ObjectUtil}
 
 import scala.annotation.tailrec
 
@@ -21,7 +20,7 @@ object Index {
     val sgitPath = repoPath + File.separator + ".sgit"
 
     // Create INDEX file if doesnt exists yet
-    if (!hasIndexFile(sgitPath)) {
+    if (!hasIndexFile()) {
       new File(sgitPath + File.separator + "INDEX").createNewFile()
     }
     // Get all the files corresponding to the arguments input in add command line
@@ -36,12 +35,11 @@ object Index {
   def addBlobInObjects(filePath: String, repoPath: String): Unit = {
 
     // Get file content in order to hash it
-    val fileAbsolutePath = sgitPath + File.separator + filePath
-    val source = scala.io.Source.fromFile(fileAbsolutePath)
-    val lines = try source.getLines mkString "\n" finally source.close()
+    val fileAbsolutePath = repoPath + File.separator + filePath
+    val lines = FileUtil.getFileContent(fileAbsolutePath).mkString
 
     // Hash content to use it as a blob's id
-    val hashedID = SGitObject.hash(lines)
+    val hashedID = ObjectUtil.hash(lines)
     val blobPath = repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + hashedID
 
     // If the file is already indexed and not modified (same hashed id), we do nothing
@@ -72,8 +70,7 @@ object Index {
 
     // Get INDEX content as a String
     val indexPath = repoPath + File.separator + ".sgit" + File.separator + File.separator + "INDEX"
-    val source = scala.io.Source.fromFile(indexPath)
-    val indexLines = try source.getLines mkString "\n" finally source.close()
+    val indexLines = FileUtil.getFileContent(indexPath).mkString
 
     // Check if INDEX content contains the filePath,
     // if yes we have to remove it in order to replace it with the new version (new hashed id)
@@ -88,8 +85,8 @@ object Index {
   def isAlreadyIndexed(hashedID: String, filePath: String, repoPath: String): Boolean = {
     // Get INDEX content
     val indexPath = repoPath + File.separator + ".sgit" + File.separator + File.separator + "INDEX"
-    val source = scala.io.Source.fromFile(indexPath)
-    val indexLines = try source.getLines.toList finally source.close()
+    val indexLines = FileUtil.getFileContent(indexPath)
+
     // Check if INDEX contains
     indexLines.contains(hashedID + " " + filePath)
   }

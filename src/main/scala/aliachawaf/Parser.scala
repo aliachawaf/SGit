@@ -41,6 +41,9 @@ object Parser extends App {
             .action((x, c) => c.copy(files = c.files :+ x))
             .text("file to add to stage")
         ),
+      cmd("commit")
+        .action((_, c) => c.copy(mode = "commit"))
+        .text("create a new commit with staged files"),
     )
   }
 
@@ -54,8 +57,21 @@ object Parser extends App {
           Repository.initialize(currentDirectory)
         }
         case "add" => {
-          if (Repository.isInitialized(currentDirectory) && Repository.getPathSGit(currentDirectory).isDefined) {
+          if (Repository.isInRepository()) {
             Index.add(config.files, currentDirectory)
+          } else {
+            // TO DO print NOT SGIT REPO
+          }
+        }
+        case "commit" => {
+          if (Repository.isInRepository()) {
+            //if (Repository.hasIndexFile()) {
+              println("COMMIT")
+            val repoPath = Repository.getRepoPath(currentDirectory).get
+            Commit.commit(repoPath)
+          //  } else {
+              // TO DO print
+
           } else {
             // TO DO print NOT SGIT REPO
           }

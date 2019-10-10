@@ -1,7 +1,9 @@
 package aliachawaf.util
 
 import java.io.{File, FileOutputStream}
+import java.math.BigInteger
 import java.nio.file.{Files, Paths, StandardCopyOption}
+import java.security.MessageDigest
 
 import scala.annotation.tailrec
 import scala.util.matching.Regex
@@ -43,5 +45,10 @@ object FileUtil {
       }
     }
     loop(List[String](), files)
+  }
+
+  def getFileContent(filePath: String): List[String] = {
+    val source = scala.io.Source.fromFile(filePath)
+    return try source.getLines.toList finally source.close()
   }
 }

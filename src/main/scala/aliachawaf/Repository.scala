@@ -33,11 +33,11 @@ object Repository {
   /* Returns true if the given repository is already initialized. */
   def isInitialized(path: String): Boolean = new File(path + File.separator + ".sgit").exists()
 
-  /* Returns true if the path is in a SGit repository  */
+  /* Returns true if the path is in a SGit repository */
   def isInRepository(): Boolean = Repository.getRepoPath(System.getProperty("user.dir")).isDefined
 
   /* Returns true if the given path contains INDEX file */
-  def hasIndexFile(path: String): Boolean = new File(path + ".sgit" + File.separator + "INDEX").exists()
+  def hasIndexFile(): Boolean = new File(getRepoPath(System.getProperty("user.dir")).get + ".sgit" + File.separator + "INDEX").exists()
 
   /* Returns the path containing .sgit folder if exists,
      else returns None if the given path in parameter is not in a SGit repository

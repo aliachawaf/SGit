@@ -32,46 +32,53 @@ object Commit {
 
     // Add commit object in .sgit/objects
     addCommitInObjects(repoPath, commitTreeHash, commitMsg)
-
-    "TO DO"
   }
+
 
   /**
    *
    * @param repoPath
    * @param commitTreeHash : hash of the new tree created with the commit
    * @param commitMsg      : message of the commit
-   * @return the hash of the new sgit object commit created
+   * @return the msg to display to the user after sgit commit
    */
   def addCommitInObjects(repoPath: String, commitTreeHash: String, commitMsg: String): String = {
 
     /** Commit content :
-     *    - parent commit hash
-     *    - commit tree hash
-     *    - commit message
+     *    - parent hash
+     *    - tree hash
+     *    - message messageContent
      */
 
-    // Get parent commit
-    val currentBranch = FileUtil.getFileContent(repoPath + File.separator + ".sgit" + File.separator + "HEAD") mkString "\n"
-    val currentBranchPath = repoPath + File.separator + ".sgit" + File.separator + currentBranch
+    val currentBranchName = ObjectUtil.getCurrentBranch(repoPath).split(File.separator).last
 
-    println(currentBranchPath)
+    // If there is no differences between current commit and previous commit, we don't have to create the new commit
+    if (commitTreeHash != ObjectUtil.getLastCommitTree(repoPath).getOrElse("")) {
+      // Get parent commit
+      val currentBranchPath = repoPath + File.separator + ".sgit" + File.separator + ObjectUtil.getCurrentBranch(repoPath)
 
-    if (new File(currentBranchPath).exists()) {
-      val parentCommit = FileUtil.getFileContent(currentBranchPath) mkString "\n"
-      val commitContent = "parent " + parentCommit + "\n" + "tree " + commitTreeHash + "\n" + "message " + commitMsg
-      val commitHash = ObjectUtil.addSGitObject(repoPath, commitContent)
-      // Update current branch reference
-      FileUtil.createNewFile(currentBranchPath, commitHash)
-      commitHash
-    }
-    // If it is the first commit of the branch, then the commit has no parent
-    else {
-      val commitContent = "tree " + commitTreeHash + "\n" + "message " + commitMsg
-      val commitHash = ObjectUtil.addSGitObject(repoPath, commitContent)
-      // Update current branch reference
-      FileUtil.createNewFile(currentBranchPath, commitHash)
-      commitHash
+      // If not first commit for this branch
+      if (new File(currentBranchPath).exists()) {
+        val parentCommit = FileUtil.getFileContent(currentBranchPath) mkString "\n"
+        val commitContent = "parent " + parentCommit + "\n" + "tree " + commitTreeHash + "\n" + "message " + commitMsg
+        val commitHash = ObjectUtil.addSGitObject(repoPath, commitContent)
+        // Update current branch reference
+        FileUtil.createNewFile(currentBranchPath, commitHash)
+
+        "[" + currentBranchName + " " + commitHash.slice(0, 8) + "] " + commitMsg + "\n "
+        // TO DO add files changed, deletions, additions
+      }
+      // If it is the first commit of the branch, then the commit has no parent
+      else {
+        val commitContent = "tree " + commitTreeHash + "\n" + "message " + commitMsg
+        val commitHash = ObjectUtil.addSGitObject(repoPath, commitContent)
+        // Update current branch reference
+        FileUtil.createNewFile(currentBranchPath, commitHash)
+        "[" + currentBranchName + " " + commitHash.slice(0, 8) + "] " + commitMsg + "\n "
+        // TO DO add files changed, deletions, additions
+      }
+    } else {
+      "On branch " + currentBranchName + "\nNothing to commit, working tree clean."
     }
   }
 

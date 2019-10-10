@@ -49,7 +49,7 @@ object Parser extends App {
           opt[String]('m', "message")
             .required()
             .maxOccurs(1)
-            .action ((x, c) => c.copy( arguments = x))
+            .action((x, c) => c.copy(arguments = x))
         )
     )
   }
@@ -72,22 +72,23 @@ object Parser extends App {
           }
         }
         case "commit" => {
-          if (Repository.isInRepository() && Repository.hasIndexFile(repoPath.get)) {
-            Commit.commit(repoPath.get, config.arguments)
-          } else {
-            // TO DO print NOT SGIT REPO
+          if (Repository.isInRepository()) {
+            if (Repository.hasIndexFile(repoPath.get)) println(Commit.commit(repoPath.get, config.arguments))
+            //else //print Nothing to commit.
           }
+          //else // print not a repo sgit
         }
-        case _ =>
-          printNotFound(config.mode)
-      }
     case _ =>
-    // arguments are bad, error message will have been displayed
+      printNotFound(config.mode)
   }
 
+  case _ =>
+  // arguments are bad, error message will have been displayed
+}
 
-  // Utils _ Printing methods
-  def printNotFound(command: String): Unit = println(command + ": command not found.")
 
-  def printNotSGitCommand(command: String): Unit = println("sgit: '" + command + "' is not a sgit command. See 'sgit --help'.")
+// Utils _ Printing methods
+def printNotFound (command: String): Unit = println (command + ": command not found.")
+
+def printNotSGitCommand (command: String): Unit = println ("sgit: '" + command + "' is not a sgit command. See 'sgit --help'.")
 }

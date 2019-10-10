@@ -31,4 +31,28 @@ object ObjectUtil {
     FileUtil.createNewFile(objectPath, objectContent)
     objectHash
   }
+
+  def getCurrentBranch(repoPath: String): String = {
+    FileUtil.getFileContent(repoPath + File.separator + ".sgit" + File.separator + "HEAD") mkString "\n"
+  }
+
+  def getLastCommit(repoPath: String, currentBranch: String): Option[String] = {
+    val branchPath = repoPath + File.separator + ".sgit" + File.separator + currentBranch
+    if (new File(branchPath).exists()) Some(FileUtil.getFileContent(branchPath) mkString "\n")
+    else None
+  }
+
+  def getLastCommitTree(repoPath: String): Option[String] = {
+    val currentBranch = getCurrentBranch(repoPath)
+    val lastCommit = getLastCommit(repoPath, currentBranch)
+
+    if (lastCommit.isDefined) {
+      val lastCommitContent = FileUtil.getFileContent(repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + lastCommit.get)
+      val lastCommitTree = lastCommitContent.filter(_.contains("tree ")) mkString "\n"
+      // Remove the word "tree" to keep only tree hash
+      Some(lastCommitTree.split(" ")(1))
+    } else {
+      None
+    }
+  }
 }

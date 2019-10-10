@@ -8,8 +8,6 @@ import scala.annotation.tailrec
 
 object Index {
 
-  def hasIndexFile(repoPath: String) = ???
-
   /*
     Add a file to the stage in index file.
     For the first add execution, we have to create INDEX file in .sgit
@@ -19,7 +17,7 @@ object Index {
     val sgitPath = repoPath + File.separator + ".sgit"
 
     // Create INDEX file if doesnt exists yet
-    if (!hasIndexFile(repoPath)) {
+    if (Repository.hasIndexFile(repoPath)) {
       new File(sgitPath + File.separator + "INDEX").createNewFile()
     }
 

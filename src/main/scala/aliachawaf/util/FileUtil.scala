@@ -24,7 +24,7 @@ object FileUtil {
   def createNewFile(path: String, content: String): Unit = {
     val f = new File(path)
     f.createNewFile()
-    FileUtil.writeFile(f, content.getBytes.toList, true)
+    FileUtil.writeFile(f, content.getBytes.toList, false)
   }
 
   def recursiveListFiles(f: File, r: Regex): Array[File] = {

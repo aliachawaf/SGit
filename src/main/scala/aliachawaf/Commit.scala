@@ -11,7 +11,7 @@ object Commit {
    * @param repoPath : path of the sgit repository
    * @return
    */
-  def commit(repoPath: String): String = {
+  def commit(repoPath: String, commitMsg: String): String = {
 
     // Get .sgit/INDEX content
     val indexLines = FileUtil.getFileContent(repoPath + File.separator + ".sgit" + File.separator + "INDEX")
@@ -29,10 +29,50 @@ object Commit {
 
     //
     val commitTreeHash = createCommitTree(repoPath, indexPathsSorted, indexContent, indexPathsSorted.head.length)
-    println("YEEEEEEEEEEEEEEEEEEES")
-    println(commitTreeHash)
+
+    // Add commit object in .sgit/objects
+    addCommitInObjects(repoPath, commitTreeHash, commitMsg)
 
     "TO DO"
+  }
+
+  /**
+   *
+   * @param repoPath
+   * @param commitTreeHash : hash of the new tree created with the commit
+   * @param commitMsg      : message of the commit
+   * @return the hash of the new sgit object commit created
+   */
+  def addCommitInObjects(repoPath: String, commitTreeHash: String, commitMsg: String): String = {
+
+    /** Commit content :
+     *    - parent commit hash
+     *    - commit tree hash
+     *    - commit message
+     */
+
+    // Get parent commit
+    val currentBranch = FileUtil.getFileContent(repoPath + File.separator + ".sgit" + File.separator + "HEAD") mkString "\n"
+    val currentBranchPath = repoPath + File.separator + ".sgit" + File.separator + currentBranch
+
+    println(currentBranchPath)
+
+    if (new File(currentBranchPath).exists()) {
+      val parentCommit = FileUtil.getFileContent(currentBranchPath) mkString "\n"
+      val commitContent = "parent " + parentCommit + "\n" + "tree " + commitTreeHash + "\n" + "message " + commitMsg
+      val commitHash = ObjectUtil.addSGitObject(repoPath, commitContent)
+      // Update current branch reference
+      FileUtil.createNewFile(currentBranchPath, commitHash)
+      commitHash
+    }
+    // If it is the first commit of the branch, then the commit has no parent
+    else {
+      val commitContent = "tree " + commitTreeHash + "\n" + "message " + commitMsg
+      val commitHash = ObjectUtil.addSGitObject(repoPath, commitContent)
+      // Update current branch reference
+      FileUtil.createNewFile(currentBranchPath, commitHash)
+      commitHash
+    }
   }
 
 
@@ -52,9 +92,7 @@ object Commit {
 
       // Create Commit Tree object in .sgit/objects
       val commitTreeContent = parentContent("") mkString "\n"
-
       ObjectUtil.addSGitObject(repoPath, commitTreeContent)
-      commitTreeContent
     }
     else {
       /** Get the paths of INDEX having the current size in a List of String and with no doublons */

@@ -37,7 +37,9 @@ object Repository {
   def isInRepository(): Boolean = Repository.getRepoPath(System.getProperty("user.dir")).isDefined
 
   /* Returns true if the given path contains INDEX file */
-  def hasIndexFile(): Boolean = new File(getRepoPath(System.getProperty("user.dir")).get + ".sgit" + File.separator + "INDEX").exists()
+  def hasIndexFile(repoPath: String): Boolean = new File(repoPath + File.separator + ".sgit" + File.separator + "INDEX").exists()
+
+  def hasBranchMaster(repoPath: String): Boolean = new File(repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + "master").exists()
 
   /* Returns the path containing .sgit folder if exists,
      else returns None if the given path in parameter is not in a SGit repository

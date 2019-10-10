@@ -20,7 +20,7 @@ object Index {
     val sgitPath = repoPath + File.separator + ".sgit"
 
     // Create INDEX file if doesnt exists yet
-    if (!hasIndexFile()) {
+    if (!hasIndexFile(repoPath)) {
       new File(sgitPath + File.separator + "INDEX").createNewFile()
     }
     // Get all the files corresponding to the arguments input in add command line

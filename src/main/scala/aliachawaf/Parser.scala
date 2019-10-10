@@ -4,19 +4,20 @@ import java.io.File
 import scopt.OParser
 
 case class Config(
-   foo: Int = -1,
-   out: File = new File("."),
-   xyz: Boolean = false,
-   libName: String = "",
-   maxCount: Int = -1,
-   verbose: Boolean = false,
-   debug: Boolean = false,
-   mode: String = "",
-   files: Seq[File] = Seq(),
-   keepalive: Boolean = false,
-   jars: Seq[File] = Seq(),
-   kwargs: Map[String, String] = Map()
-)
+                   foo: Int = -1,
+                   out: File = new File("."),
+                   xyz: Boolean = false,
+                   libName: String = "",
+                   maxCount: Int = -1,
+                   verbose: Boolean = false,
+                   debug: Boolean = false,
+                   mode: String = "",
+                   arguments: String = "",
+                   files: Seq[File] = Seq(),
+                   keepalive: Boolean = false,
+                   jars: Seq[File] = Seq(),
+                   kwargs: Map[String, String] = Map()
+                 )
 
 object Parser extends App {
 
@@ -43,11 +44,18 @@ object Parser extends App {
         ),
       cmd("commit")
         .action((_, c) => c.copy(mode = "commit"))
-        .text("create a new commit with staged files"),
+        .text("create a new commit with staged files")
+        .children(
+          opt[String]('m', "message")
+            .required()
+            .maxOccurs(1)
+            .action ((x, c) => c.copy( arguments = x))
+        )
     )
   }
 
   val currentDirectory = System.getProperty("user.dir")
+  val repoPath = Repository.getRepoPath(currentDirectory)
 
   // OParser.parse returns Option[app.Config]
   OParser.parse(parser1, args, Config()) match {
@@ -64,14 +72,8 @@ object Parser extends App {
           }
         }
         case "commit" => {
-          if (Repository.isInRepository()) {
-            //if (Repository.hasIndexFile()) {
-              println("COMMIT")
-            val repoPath = Repository.getRepoPath(currentDirectory).get
-            Commit.commit(repoPath)
-          //  } else {
-              // TO DO print
-
+          if (Repository.isInRepository() && Repository.hasIndexFile(repoPath.get)) {
+            Commit.commit(repoPath.get, config.arguments)
           } else {
             // TO DO print NOT SGIT REPO
           }
@@ -86,5 +88,6 @@ object Parser extends App {
 
   // Utils _ Printing methods
   def printNotFound(command: String): Unit = println(command + ": command not found.")
+
   def printNotSGitCommand(command: String): Unit = println("sgit: '" + command + "' is not a sgit command. See 'sgit --help'.")
 }

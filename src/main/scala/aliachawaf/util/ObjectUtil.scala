@@ -23,10 +23,12 @@ object ObjectUtil {
    *
    * @param repoPath      : path of the SGit repository
    * @param objectContent : content of the SGit object (tree or blob) to put in the file and hash for the file name
+   * @return : the hash of the object created
    */
-  def addSGitObject(repoPath: String, objectContent: String): Unit = {
+  def addSGitObject(repoPath: String, objectContent: String): String = {
     val objectHash = hash(objectContent)
     val objectPath = repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + objectHash
     FileUtil.createNewFile(objectPath, objectContent)
+    objectHash
   }
 }

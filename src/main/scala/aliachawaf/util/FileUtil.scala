@@ -27,24 +27,9 @@ object FileUtil {
     FileUtil.writeFile(f, content.getBytes.toList, false)
   }
 
-  def recursiveListFiles(f: File, r: Regex): Array[File] = {
+  def recursiveListFiles(f: File): Array[File] = {
     val these = f.listFiles
-    val good = these.filter(f => r.findFirstIn(f.getName).isDefined)
-    good ++ these.filter(_.isDirectory).flatMap(recursiveListFiles(_, r))
-  }
-
-  def getFilePaths(files: Seq[File], directory: String): List[String] = {
-    @tailrec
-    def loop(listAcc: List[String], files: Seq[File]): List[String] = {
-      files match {
-        case Nil => listAcc
-        case head :: tail => {
-          val list = FileUtil.recursiveListFiles(new File(directory), head.getName.r).filter(f => f.isFile).map(f => f.getAbsolutePath)
-          loop(listAcc ++ list, tail)
-        }
-      }
-    }
-    loop(List[String](), files)
+    these ++ these.filter(_.isDirectory).flatMap(recursiveListFiles _)
   }
 
   def getFileContent(filePath: String): List[String] = {

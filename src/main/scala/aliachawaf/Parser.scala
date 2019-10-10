@@ -13,7 +13,7 @@ case class Config(
                    debug: Boolean = false,
                    mode: String = "",
                    arguments: String = "",
-                   files: Seq[File] = Seq(),
+                   files: Seq[String] = Seq(),
                    keepalive: Boolean = false,
                    jars: Seq[File] = Seq(),
                    kwargs: Map[String, String] = Map()
@@ -36,7 +36,7 @@ object Parser extends App {
         .action((_, c) => c.copy(mode = "add"))
         .text("adds the given files to the stage")
         .children(
-          arg[File]("<file>...")
+          arg[String]("<file>...")
             .unbounded()
             .optional()
             .action((x, c) => c.copy(files = c.files :+ x))
@@ -66,7 +66,7 @@ object Parser extends App {
         }
         case "add" => {
           if (Repository.isInRepository()) {
-            Index.add(config.files, currentDirectory)
+            Index.add(config.files, currentDirectory, repoPath.get)
           } else {
             // TO DO print NOT SGIT REPO
           }

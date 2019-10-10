@@ -2,41 +2,47 @@ package aliachawaf
 
 import java.io.File
 
-import aliachawaf.Repository.{getRepoPath, hasIndexFile}
 import aliachawaf.util.{FileUtil, ObjectUtil}
 
 import scala.annotation.tailrec
 
 object Index {
 
-  /*
-  Add a file to the stage in index file.
-  For the first add execution, we have to create INDEX file in .sgit
-   */
-  def add(files: Seq[File], directory: String): Unit = {
+  def hasIndexFile(repoPath: String) = ???
 
-    // Get .sgit path
-    val repoPath = getRepoPath(directory).get
+  /*
+    Add a file to the stage in index file.
+    For the first add execution, we have to create INDEX file in .sgit
+     */
+  def add(files: Seq[String], directory: String, repoPath: String): Unit = {
+
     val sgitPath = repoPath + File.separator + ".sgit"
 
     // Create INDEX file if doesnt exists yet
     if (!hasIndexFile(repoPath)) {
       new File(sgitPath + File.separator + "INDEX").createNewFile()
     }
-    // Get all the files corresponding to the arguments input in add command line
-    val listFilePaths = FileUtil.getFilePaths(files, directory)
 
-    // Create a Blob for each file and add it in .sgit/objects
-    listFilePaths.foreach(p => addBlobInObjects(p.replace(repoPath + File.separator, ""), repoPath))
+    val filesCurrentDirectory = files.map(f => new File(f)).filter(_.isFile)
+    val directoriesCurrentDirectory = files.map(f => new File(f)).filter(_.isDirectory)
 
-    // Add files in .sgit/INDEX
+    val allFilesCurrentDirectory = filesCurrentDirectory ++ directoriesCurrentDirectory.flatMap(FileUtil.recursiveListFiles).toList
+
+    // keep only files and remove files from .sgit folder
+    val allFilesToAdd = allFilesCurrentDirectory.filter(_.isFile).filter(!_.getAbsolutePath.contains(".sgit"))
+
+    // remove absolute path and keep relative path
+    val allFilesPaths = allFilesToAdd.map(_.getAbsolutePath.replace(repoPath + File.separator, ""))
+
+    // Create blobs in .sgit/objects and add them in .sgit/INDEX file
+    allFilesPaths.foreach(path => addBlobInObjects(path, repoPath))
   }
 
   def addBlobInObjects(filePath: String, repoPath: String): Unit = {
 
     // Get file content in order to hash it
-    val fileAbsolutePath = repoPath + File.separator + filePath
-    val lines = FileUtil.getFileContent(fileAbsolutePath).mkString
+    //val fileAbsolutePath = repoPath + File.separator + filePath
+    val lines = FileUtil.getFileContent(filePath).mkString
 
     // Hash content to use it as a blob's id
     val hashedID = ObjectUtil.hash(lines)
@@ -57,8 +63,6 @@ object Index {
   def updateIndex(hashedID: String, filePath: String, repoPath: String): Unit = {
 
     val indexPath = repoPath + File.separator + ".sgit" + File.separator + File.separator + "INDEX"
-
-    // TO DO : Checks if all the line is contained
     removePathAlreadyIndexed(hashedID, filePath, repoPath)
 
     val indexContent = hashedID + " " + filePath + "\n"

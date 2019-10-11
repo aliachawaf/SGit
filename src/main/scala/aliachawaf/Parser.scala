@@ -2,6 +2,7 @@ package aliachawaf
 
 import java.io.File
 import scopt.OParser
+import aliachawaf.util.PrintUtil._
 
 case class Config(
                    foo: Int = -1,
@@ -61,34 +62,23 @@ object Parser extends App {
   OParser.parse(parser1, args, Config()) match {
     case Some(config) =>
       config.mode match {
-        case "init" => {
-          Repository.initialize(currentDirectory)
-        }
+        case "init" => Repository.initialize(currentDirectory)
         case "add" => {
-          if (Repository.isInRepository()) {
-            Index.add(config.files, currentDirectory, repoPath.get)
-          } else {
-            // TO DO print NOT SGIT REPO
-          }
+          if (Repository.isInRepository(currentDirectory)) Index.add(config.files, currentDirectory, repoPath.get)
+          else printNotSGitRepository()
         }
         case "commit" => {
-          if (Repository.isInRepository()) {
+          if (Repository.isInRepository(currentDirectory)) {
             if (Repository.hasIndexFile(repoPath.get)) println(Commit.commit(repoPath.get, config.arguments))
-            //else //print Nothing to commit.
+            else printNoIndex()
           }
-          //else // print not a repo sgit
+          else printNotSGitRepository()
         }
+        case _ =>
+        //
+      }
+
     case _ =>
-      printNotFound(config.mode)
+    // arguments are bad, error message will have been displayed
   }
-
-  case _ =>
-  // arguments are bad, error message will have been displayed
-}
-
-
-// Utils _ Printing methods
-def printNotFound (command: String): Unit = println (command + ": command not found.")
-
-def printNotSGitCommand (command: String): Unit = println ("sgit: '" + command + "' is not a sgit command. See 'sgit --help'.")
 }

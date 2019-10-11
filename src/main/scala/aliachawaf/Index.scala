@@ -1,10 +1,7 @@
 package aliachawaf
 
 import java.io.File
-
 import aliachawaf.util.{FileUtil, ObjectUtil}
-
-import scala.annotation.tailrec
 
 object Index {
 

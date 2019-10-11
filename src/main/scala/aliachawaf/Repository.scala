@@ -1,7 +1,8 @@
 package aliachawaf
 
 import java.io.File
-import util.FileUtil
+import util.{FileUtil, PrintUtil}
+import scala.annotation.tailrec
 
 class Repository(path: String)
 
@@ -26,7 +27,7 @@ object Repository {
       FileUtil.createNewFile(pathSGit + "HEAD", "branches/master")
 
     } else {
-      println("Already initialized SGit repository")
+      PrintUtil.printAlreadyInitialized()
     }
   }
 
@@ -34,7 +35,7 @@ object Repository {
   def isInitialized(path: String): Boolean = new File(path + File.separator + ".sgit").exists()
 
   /* Returns true if the path is in a SGit repository */
-  def isInRepository(): Boolean = Repository.getRepoPath(System.getProperty("user.dir")).isDefined
+  def isInRepository(currentDirectory: String): Boolean = Repository.getRepoPath(currentDirectory).isDefined
 
   /* Returns true if the given path contains INDEX file */
   def hasIndexFile(repoPath: String): Boolean = new File(repoPath + File.separator + ".sgit" + File.separator + "INDEX").exists()
@@ -44,11 +45,12 @@ object Repository {
   /* Returns the path containing .sgit folder if exists,
      else returns None if the given path in parameter is not in a SGit repository
   */
-  def getRepoPath(path: String): Option[String] = {
-    if (path.isEmpty) None
-    else if (isInitialized(path)) Some(path)
+  @tailrec
+  def getRepoPath(currentDirectory: String): Option[String] = {
+    if (currentDirectory.isEmpty) None
+    else if (isInitialized(currentDirectory)) Some(currentDirectory)
     else {
-      val parentFile = new File(path).getParentFile
+      val parentFile = new File(currentDirectory).getParentFile
       if (!parentFile.getName.isEmpty) getRepoPath(parentFile.getAbsolutePath)
       else getRepoPath("")
     }

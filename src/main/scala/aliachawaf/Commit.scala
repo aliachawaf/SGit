@@ -1,7 +1,9 @@
 package aliachawaf
 
 import java.io.File
-import aliachawaf.util.{FileUtil, ObjectUtil}
+
+import aliachawaf.util.{BranchUtil, CommitUtil, FileUtil, ObjectUtil, PrintUtil}
+
 import scala.annotation.tailrec
 
 object Commit {
@@ -50,12 +52,12 @@ object Commit {
      *    - message messageContent
      */
 
-    val currentBranchName = ObjectUtil.getCurrentBranch(repoPath).split(File.separator).last
+    val currentBranchName = BranchUtil.getCurrentBranchName(repoPath)
 
     // If there is no differences between current commit and previous commit, we don't have to create the new commit
-    if (commitTreeHash != ObjectUtil.getLastCommitTree(repoPath).getOrElse("")) {
+    if (commitTreeHash != CommitUtil.getLastCommitTree(repoPath).getOrElse("")) {
       // Get parent commit
-      val currentBranchPath = repoPath + File.separator + ".sgit" + File.separator + ObjectUtil.getCurrentBranch(repoPath)
+      val currentBranchPath = repoPath + File.separator + ".sgit" + File.separator + BranchUtil.getCurrentBranch(repoPath)
 
       // If not first commit for this branch
       if (new File(currentBranchPath).exists()) {
@@ -65,8 +67,8 @@ object Commit {
         // Update current branch reference
         FileUtil.createNewFile(currentBranchPath, commitHash)
 
-        "[" + currentBranchName + " " + commitHash.slice(0, 8) + "] " + commitMsg + "\n "
-        // TO DO add files changed, deletions, additions
+        CommitUtil.resultMessage(currentBranchName, commitHash, commitMsg)
+
       }
       // If it is the first commit of the branch, then the commit has no parent
       else {
@@ -74,14 +76,12 @@ object Commit {
         val commitHash = ObjectUtil.addSGitObject(repoPath, commitContent)
         // Update current branch reference
         FileUtil.createNewFile(currentBranchPath, commitHash)
-        "[" + currentBranchName + " " + commitHash.slice(0, 8) + "] " + commitMsg + "\n "
-        // TO DO add files changed, deletions, additions
+        CommitUtil.resultMessage(currentBranchName, commitHash, commitMsg)
       }
     } else {
-      "On branch " + currentBranchName + "\nNothing to commit, working tree clean."
+      CommitUtil.resultMessageSameCommit(currentBranchName)
     }
   }
-
 
   /**
    * @return The hash of the Commit Tree created recursively

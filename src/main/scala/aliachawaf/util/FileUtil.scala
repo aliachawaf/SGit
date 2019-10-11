@@ -28,12 +28,19 @@ object FileUtil {
   }
 
   def recursiveListFiles(f: File): Array[File] = {
-    val these = f.listFiles
-    these ++ these.filter(_.isDirectory).flatMap(recursiveListFiles _)
+    f.getName match {
+      case "." =>
+        val these = f.listFiles
+        val theseClean = these.map(file => new File(file.getPath.slice(2, file.getPath.length)))
+        theseClean ++ theseClean.filter(_.isDirectory).flatMap(recursiveListFiles _)
+      case _ =>
+        val these = f.listFiles
+        these ++ these.filter(_.isDirectory).flatMap(recursiveListFiles _)
+    }
   }
 
   def getFileContent(filePath: String): List[String] = {
-    val source = scala.io.Source.fromFile(filePath)
+    val source = scala.io.Source.fromFile(filePath, "UTF-8")
     return try source.getLines.toList finally source.close()
   }
 }

@@ -22,7 +22,7 @@ object CommitUtil {
   }
 
   // TODO Add files deletions and additions
-  def resultMessage(branch: String, hash: String, message: String): String = "[" + branch + " " + hash.slice(0, 8) + "] " + message + "\n "
+  def resultMessage(branch: String, hash: String, message: String): String = "[" + branch + " " + hash.slice(0, 7) + "] " + message + "\n "
 
   def resultMessageSameCommit(branch: String): String = "On branch " + branch + "\nNothing to commit, working tree clean."
 

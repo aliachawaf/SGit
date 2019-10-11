@@ -9,17 +9,17 @@ object Index {
     Add a file to the stage in index file.
     For the first add execution, we have to create INDEX file in .sgit
      */
-  def add(files: Seq[String], directory: String, repoPath: String): Unit = {
+  def add(arguments: Seq[String], directory: String, repoPath: String): Unit = {
 
     val sgitPath = repoPath + File.separator + ".sgit"
 
     // Create INDEX file if doesnt exists yet
-    if (Repository.hasIndexFile(repoPath)) {
+    if (!Repository.hasIndexFile(repoPath)) {
       new File(sgitPath + File.separator + "INDEX").createNewFile()
     }
 
-    val filesCurrentDirectory = files.map(f => new File(f)).filter(_.isFile)
-    val directoriesCurrentDirectory = files.map(f => new File(f)).filter(_.isDirectory)
+    val filesCurrentDirectory = arguments.map(f => new File(f)).filter(_.isFile)
+    val directoriesCurrentDirectory = arguments.map(f => new File(f)).filter(_.isDirectory)
 
     val allFilesCurrentDirectory = filesCurrentDirectory ++ directoriesCurrentDirectory.flatMap(FileUtil.recursiveListFiles).toList
 
@@ -37,7 +37,7 @@ object Index {
 
     // Get file content in order to hash it
     //val fileAbsolutePath = repoPath + File.separator + filePath
-    val lines = FileUtil.getFileContent(filePath).mkString
+    val lines = FileUtil.getFileContent(repoPath + File.separator + filePath).mkString
 
     // Hash content to use it as a blob's id
     val hashedID = ObjectUtil.hash(lines)

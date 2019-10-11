@@ -40,7 +40,7 @@ object FileUtil {
   }
 
   def getFileContent(filePath: String): List[String] = {
-    val source = scala.io.Source.fromFile(filePath)
+    val source = scala.io.Source.fromFile(filePath, "UTF-8")
     return try source.getLines.toList finally source.close()
   }
 }

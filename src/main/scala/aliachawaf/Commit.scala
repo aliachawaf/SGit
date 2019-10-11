@@ -47,8 +47,8 @@ object Commit {
   def addCommitInObjects(repoPath: String, commitTreeHash: String, commitMsg: String): String = {
 
     /** Commit content :
-     *    - parent hash
      *    - tree hash
+     *    - parent hash
      *    - message messageContent
      */
 
@@ -62,7 +62,7 @@ object Commit {
       // If not first commit for this branch
       if (new File(currentBranchPath).exists()) {
         val parentCommit = FileUtil.getFileContent(currentBranchPath) mkString "\n"
-        val commitContent = "parent " + parentCommit + "\n" + "tree " + commitTreeHash + "\n" + "message " + commitMsg
+        val commitContent = "tree " + commitTreeHash + "\n" + "parent " + parentCommit + "\n" + "message " + commitMsg
         val commitHash = ObjectUtil.addSGitObject(repoPath, commitContent)
         // Update current branch reference
         FileUtil.createNewFile(currentBranchPath, commitHash)

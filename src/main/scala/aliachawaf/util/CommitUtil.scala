@@ -16,12 +16,9 @@ object CommitUtil {
 
     if (lastCommit.isDefined) {
       val lastCommitContent = FileUtil.getFileContent(repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + lastCommit.get)
-      val lastCommitTree = lastCommitContent.filter(_.contains("tree ")) mkString "\n"
-      // Remove the word "tree" to keep only tree hash
-      Some(lastCommitTree.split(" ")(1))
-    } else {
-      None
+      Some(lastCommitContent(0).split(" ")(1))
     }
+    else None
   }
 
   // TODO Add files deletions and additions

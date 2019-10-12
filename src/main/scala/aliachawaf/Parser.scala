@@ -39,7 +39,7 @@ object Parser extends App {
         .children(
           arg[String]("<file>...")
             .unbounded()
-            .optional()
+            .required()
             .action((x, c) => c.copy(files = c.files :+ x))
             .text("file to add to stage")
         ),
@@ -62,7 +62,7 @@ object Parser extends App {
   OParser.parse(parser1, args, Config()) match {
     case Some(config) =>
       config.mode match {
-        case "init" => Repository.initialize(currentDirectory)
+        case "init" => printInitResult(Repository.initialize(currentDirectory), currentDirectory)
         case "add" => {
           if (Repository.isInRepository(currentDirectory)) Index.add(config.files, currentDirectory, repoPath.get)
           else printNotSGitRepository()

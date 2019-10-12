@@ -8,8 +8,12 @@ class Repository(path: String)
 
 object Repository {
 
-  /* Initializes the repository. Creates the necessary folder structure and files. */
-  def initialize(path: String): Unit = {
+  /**
+   * Initializes the repository. Creates the necessary folder structure and files.
+   * @param path : the path of the directory to be initialized
+   * @return true if the directory wad initialized, false if already initialized before
+   */
+  def initialize(path: String): Boolean = {
 
     if (!isInitialized(path)) {
 
@@ -26,9 +30,9 @@ object Repository {
       // Add HEAD file in .sgit
       FileUtil.createNewFile(pathSGit + "HEAD", "branches/master")
 
-    } else {
-      PrintUtil.printAlreadyInitialized()
+      true
     }
+    else false
   }
 
   /* Returns true if the given repository is already initialized. */
@@ -39,8 +43,6 @@ object Repository {
 
   /* Returns true if the given path contains INDEX file */
   def hasIndexFile(repoPath: String): Boolean = new File(repoPath + File.separator + ".sgit" + File.separator + "INDEX").exists()
-
-  def hasBranchMaster(repoPath: String): Boolean = new File(repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + "master").exists()
 
   /* Returns the path containing .sgit folder if exists,
      else returns None if the given path in parameter is not in a SGit repository

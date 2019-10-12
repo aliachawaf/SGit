@@ -74,9 +74,9 @@ object Index {
     // Check if INDEX content contains the filePath,
     // if yes we have to remove it in order to replace it with the new version (new hashed id)
     if (indexLines.contains(filePath)) {
-      val indexLinesList = indexLines.split("\n").toList.filter(line => !line.contains(filePath))
+      val indexLinesList = indexLines.split("\n").toList.filter(line => !line.contains(filePath)) mkString "\n"
       FileUtil.writeFile(new File(indexPath), "".getBytes.toList, append = false)
-      indexLinesList.foreach(line => FileUtil.writeFile(new File(indexPath), (line + "\n").getBytes.toList, append = true))
+      FileUtil.writeFile(new File(indexPath), indexLinesList.getBytes.toList, append = true)
     }
   }
 

@@ -2,7 +2,7 @@ package aliachawaf
 
 import java.io.File
 
-import aliachawaf.util.{BranchUtil, CommitUtil, FileUtil, ObjectUtil, PrintUtil}
+import aliachawaf.util.{BranchUtil, CommitUtil, FileUtil, IndexUtil, ObjectUtil, PrintUtil}
 
 import scala.annotation.tailrec
 
@@ -16,7 +16,7 @@ object Commit {
   def commit(repoPath: String, commitMsg: String): String = {
 
     // Get .sgit/INDEX content
-    val indexLines = FileUtil.getFileContent(repoPath + File.separator + ".sgit" + File.separator + "INDEX")
+    val indexLines = IndexUtil.getIndexContent(repoPath)
 
     // Keep only paths form index lines and split by path elements
     val indexPaths = indexLines.map(l => l.split(" ")(1).split(File.separator))

@@ -51,7 +51,10 @@ object Parser extends App {
             .required()
             .maxOccurs(1)
             .action((x, c) => c.copy(arguments = x))
-        )
+        ),
+      cmd("status")
+        .action((_, c) => c.copy(mode = "status"))
+        .text("get status of the repository")
     )
   }
 
@@ -64,7 +67,7 @@ object Parser extends App {
       config.mode match {
         case "init" => printInitResult(Repository.initialize(currentDirectory), currentDirectory)
         case "add" => {
-          if (Repository.isInRepository(currentDirectory)) Index.add(config.files, currentDirectory, repoPath.get)
+          if (Repository.isInRepository(currentDirectory)) Index.add(config.files, repoPath.get)
           else printNotSGitRepository()
         }
         case "commit" => {
@@ -74,6 +77,7 @@ object Parser extends App {
           }
           else printNotSGitRepository()
         }
+        case "status" => Status.status(currentDirectory)
         case _ =>
         //
       }

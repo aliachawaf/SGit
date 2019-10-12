@@ -1,7 +1,8 @@
 package aliachawaf
 
 import java.io.File
-import aliachawaf.util.{FileUtil, ObjectUtil}
+
+import aliachawaf.util.{FileUtil, IndexUtil, ObjectUtil}
 
 object Index {
 
@@ -9,7 +10,7 @@ object Index {
     Add a file to the stage in index file.
     For the first add execution, we have to create INDEX file in .sgit
      */
-  def add(arguments: Seq[String], directory: String, repoPath: String): Unit = {
+  def add(arguments: Seq[String], repoPath: String): Unit = {
 
     val sgitPath = repoPath + File.separator + ".sgit"
 
@@ -69,7 +70,7 @@ object Index {
 
     // Get INDEX content as a String
     val indexPath = repoPath + File.separator + ".sgit" + File.separator + File.separator + "INDEX"
-    val indexLines = FileUtil.getFileContent(indexPath).mkString
+    val indexLines = IndexUtil.getIndexContent(repoPath).mkString
 
     // Check if INDEX content contains the filePath,
     // if yes we have to remove it in order to replace it with the new version (new hashed id)
@@ -83,8 +84,7 @@ object Index {
   /* Return true if the file with the given path is already in .sgit/INDEX with the given hashedID */
   def isAlreadyIndexed(hashedID: String, filePath: String, repoPath: String): Boolean = {
     // Get INDEX content
-    val indexPath = repoPath + File.separator + ".sgit" + File.separator + File.separator + "INDEX"
-    val indexLines = FileUtil.getFileContent(indexPath)
+    val indexLines = IndexUtil.getIndexContent(repoPath)
 
     // Check if INDEX contains
     indexLines.contains(hashedID + " " + filePath)

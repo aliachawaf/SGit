@@ -52,7 +52,9 @@ object SGitParser {
 
           case "init" => Repository.initialize(currentDirectory)
 
-          case "add" => executeIfIsInitialized(currentDirectory, Index.add(config.files, repoPath.get))
+          case "add" =>
+            if (Repository.isInRepository(currentDirectory)) Index.add(config.files, repoPath.get)
+            else notSGitRepository()
 
           case "commit" =>
             if (Repository.isInRepository(currentDirectory)) {
@@ -61,7 +63,9 @@ object SGitParser {
             }
             else notSGitRepository()
 
-          case "status" => executeIfIsInitialized(currentDirectory, Status.status(currentDirectory))
+          case "status" =>
+            if (Repository.isInRepository(currentDirectory)) Status.status(currentDirectory)
+            else notSGitRepository()
 
           case _ => "TO DO"
           //
@@ -70,10 +74,5 @@ object SGitParser {
       case _ => "TO DO"
       // arguments are bad, error message will have been displayed
     }
-  }
-
-  def executeIfIsInitialized(currentDirectory: String, commandToExecute: String): String = {
-    if (Repository.isInRepository(currentDirectory)) commandToExecute
-    else notSGitRepository()
   }
 }

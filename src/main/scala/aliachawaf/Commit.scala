@@ -2,7 +2,7 @@ package aliachawaf
 
 import java.io.File
 
-import aliachawaf.util.{BranchUtil, CommitUtil, FileUtil, IndexUtil, ObjectUtil, PrintUtil}
+import aliachawaf.util.{BranchUtil, CommitUtil, FileUtil, IndexUtil, ObjectUtil, ResultUtil}
 
 import scala.annotation.tailrec
 
@@ -65,7 +65,7 @@ object Commit {
         // Update current branch reference
         FileUtil.createNewFile(currentBranchPath, commitHash)
 
-        CommitUtil.resultMessage(currentBranchName, commitHash, commitMsg)
+        ResultUtil.commitResult(currentBranchName, commitHash, commitMsg)
 
       }
       // If it is the first commit of the branch, then the commit has no parent
@@ -74,10 +74,10 @@ object Commit {
         val commitHash = ObjectUtil.addSGitObject(repoPath, commitContent)
         // Update current branch reference
         FileUtil.createNewFile(currentBranchPath, commitHash)
-        CommitUtil.resultMessage(currentBranchName, commitHash, commitMsg)
+        ResultUtil.commitResult(currentBranchName, commitHash, commitMsg)
       }
     } else {
-      CommitUtil.resultMessageSameCommit(currentBranchName)
+      ResultUtil.sameCommitResult(currentBranchName)
     }
   }
 

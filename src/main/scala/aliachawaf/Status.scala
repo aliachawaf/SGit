@@ -2,7 +2,7 @@ package aliachawaf
 
 import java.io.File
 
-import aliachawaf.util.{CommitUtil, FileUtil, ObjectUtil, IndexUtil}
+import aliachawaf.util.{CommitUtil, FileUtil, IndexUtil, ObjectUtil, ResultUtil}
 import aliachawaf.util.IndexUtil._
 
 object Status {
@@ -11,15 +11,12 @@ object Status {
 
     val repoPath = Repository.getRepoPath(currentDir).get
 
-    "Changes to be committed:\n\n" +
-      "new file: " + (get_Tracked_Modified_NotAdded(repoPath).mkString("\nnew file: ")) +
-      "modified: " + (get_Tracked_Committed_Modified(repoPath).mkString("\nmodified: ")) +
-      "\n\n" +
-    "Changes not staged for commit:\n (use \"sgit add<file>...\" to update what will be committed)\n\n" +
-      (get_Tracked_NeverCommitted(repoPath) mkString "\n") +
-      "\n\n" +
-    "Untracked files:\n (use \"sgit add <file>...\" to include in what will be committed)\n\n" +
-    (get_Untracked(repoPath) mkString "\n")
+    ResultUtil.statusResult(
+      get_Tracked_Modified_NotAdded(repoPath),
+      get_Tracked_Committed_Modified(repoPath),
+      get_Tracked_NeverCommitted(repoPath),
+      get_Untracked(repoPath)
+    )
   }
 
   /**
@@ -89,7 +86,7 @@ object Status {
     }
   }
 
-  def getAllRepoFiles(repoPath: String) : List[String] = {
+  def getAllRepoFiles(repoPath: String): List[String] = {
     FileUtil.recursiveListFiles(new File(repoPath))
       .filter(_.isFile)
       .filter(!_.getAbsolutePath.contains(".sgit"))

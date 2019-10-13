@@ -1,7 +1,9 @@
 package aliachawaf
 
 import java.io.File
-import util.{FileUtil, PrintUtil}
+
+import util.{FileUtil, ResultUtil}
+
 import scala.annotation.tailrec
 
 class Repository(path: String)
@@ -13,7 +15,7 @@ object Repository {
    * @param path : the path of the directory to be initialized
    * @return true if the directory wad initialized, false if already initialized before
    */
-  def initialize(path: String): Boolean = {
+  def initialize(path: String): String = {
 
     if (!isInitialized(path)) {
 
@@ -30,9 +32,9 @@ object Repository {
       // Add HEAD file in .sgit
       FileUtil.createNewFile(pathSGit + "HEAD", "branches/master")
 
-      true
+      ResultUtil.initResult(true, path)
     }
-    else false
+    else ResultUtil.initResult(false, path)
   }
 
   /* Returns true if the given repository is already initialized. */

@@ -10,7 +10,7 @@ object Index {
     Add a file to the stage in index file.
     For the first add execution, we have to create INDEX file in .sgit
      */
-  def add(arguments: Seq[String], repoPath: String): Unit = {
+  def add(arguments: Seq[String], repoPath: String): String = {
 
     val sgitPath = repoPath + File.separator + ".sgit"
 
@@ -32,6 +32,8 @@ object Index {
 
     // Create blobs in .sgit/objects and add them in .sgit/INDEX file
     allFilesPaths.foreach(path => addBlobInObjects(path, repoPath))
+
+    ""
   }
 
   def addBlobInObjects(filePath: String, repoPath: String): Unit = {

@@ -30,7 +30,8 @@ object ResultUtil {
       (tracked_neverCommitted mkString "\n") +
       "\n\n" +
       "Untracked files:\n (use \"sgit add <file>...\" to include in what will be committed)\n\n" +
-      (untracked mkString "\n")
+      (untracked mkString "\n") +
+      "\n\n"
 
   }
 }

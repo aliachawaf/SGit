@@ -6,7 +6,7 @@ case class Config(
                    foo: Int = -1,
                    out: File = new File("."),
                    xyz: Boolean = false,
-                   libName: String = "",
+                   name: String = "",
                    maxCount: Int = -1,
                    verbose: Boolean = false,
                    debug: Boolean = false,

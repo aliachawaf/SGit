@@ -32,6 +32,15 @@ object ResultUtil {
       "Untracked files:\n (use \"sgit add <file>...\" to include in what will be committed)\n\n" +
       (untracked mkString "\n") +
       "\n\n"
-
   }
+
+  def tagResult(created: Boolean, name: String) : String = {
+    if (created) "Tag '" + name + "' created"
+    else "fatal: tag '" + name + "' already exists"
+  }
+
+  def tagNoCommit(): String = "fatal: Failed to resolve 'HEAD' as a valid ref (i.e. there is no commit to tag)."
+
+
+
 }

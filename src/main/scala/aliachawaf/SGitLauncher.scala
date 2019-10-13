@@ -8,5 +8,5 @@ object SGitLauncher extends App {
 
   val sgitResult = SGitParser.parse(currentDirectory, repoPath, args)
 
-  printf(sgitResult)
+  println(sgitResult)
 }

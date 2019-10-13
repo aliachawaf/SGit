@@ -62,7 +62,8 @@ object Parser extends App {
   val repoPath = Repository.getRepoPath(currentDirectory)
 
   // OParser.parse returns Option[app.Config]
-  OParser.parse(parser1, args, Config()) match {
+  // TODO fix prints
+  val sgitResult = OParser.parse(parser1, args, Config()) match {
     case Some(config) =>
       config.mode match {
         case "init" => printInitResult(Repository.initialize(currentDirectory), currentDirectory)
@@ -85,4 +86,6 @@ object Parser extends App {
     case _ =>
     // arguments are bad, error message will have been displayed
   }
+
+  println(sgitResult)
 }

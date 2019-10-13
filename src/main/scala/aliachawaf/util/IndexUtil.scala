@@ -17,4 +17,9 @@ object IndexUtil {
     getIndexContent(repoPath).map(_.split(" ")(0))
   }
 
+  def getIndexAsMap(repoPath: String): Map[String, String] = {
+    val pathsIndex = getIndexPaths(repoPath)
+    val hashesIndex = getIndexHashes(repoPath)
+    (pathsIndex zip hashesIndex).toMap
+  }
 }

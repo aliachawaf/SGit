@@ -11,7 +11,15 @@ object Status {
 
     val repoPath = Repository.getRepoPath(currentDir).get
 
-    "TO DO"
+    "Changes to be committed:\n\n" +
+      "new file: " + (get_Tracked_Modified_NotAdded(repoPath).mkString("\nnew file: ")) +
+      "modified: " + (get_Tracked_Committed_Modified(repoPath).mkString("\nmodified: ")) +
+      "\n\n" +
+    "Changes not staged for commit:\n (use \"sgit add<file>...\" to update what will be committed)\n\n" +
+      (get_Tracked_NeverCommitted(repoPath) mkString "\n") +
+      "\n\n" +
+    "Untracked files:\n (use \"sgit add <file>...\" to include in what will be committed)\n\n" +
+    (get_Untracked(repoPath) mkString "\n")
   }
 
   /**
@@ -39,9 +47,7 @@ object Status {
     val newHashTracked = tracked.map(path => ObjectUtil.hash(FileUtil.getFileContent(path) mkString "\n"))
     val mapNewHash = (tracked zip newHashTracked).toMap
 
-    val pathsIndex = getIndexPaths(repoPath)
-    val hashesIndex = getIndexHashes(repoPath)
-    val mapOldHash = (pathsIndex zip hashesIndex).toMap
+    val mapOldHash = getIndexAsMap(repoPath)
 
     val trackedModifedFiles = mapNewHash.filter(path => mapOldHash(path._1) != path._2)
     trackedModifedFiles.keys.toList
@@ -53,16 +59,34 @@ object Status {
    */
   def get_Tracked_NeverCommitted(repoPath: String): List[String] = {
 
-    val indexPaths = getIndexPaths(repoPath)
-
     val lastCommitTree = CommitUtil.getLastCommitTree(repoPath)
 
-    if (lastCommitTree.isDefined) List()
-    else indexPaths.filter(path => CommitUtil.getBlobHashCommitted(repoPath, path.split(File.separator).toList, lastCommitTree.get).isEmpty)
+    if (lastCommitTree.isEmpty) List()
+    else {
+      val indexPaths = getIndexPaths(repoPath)
+      indexPaths.filter(path => CommitUtil.getBlobHashCommitted(repoPath, path.split(File.separator).toList, lastCommitTree.get).isEmpty)
+    }
   }
+
 
   def get_Tracked_Committed_Modified(repoPath: String): List[String] = {
 
+    val lastCommitTree = CommitUtil.getLastCommitTree(repoPath)
+
+    if (lastCommitTree.isEmpty) List()
+    else {
+
+      // get hash of files already committed before
+      val indexPaths = getIndexPaths(repoPath)
+      val commitHashes = indexPaths.map(path => CommitUtil.getBlobHashCommitted(repoPath, path.split(File.separator).toList, lastCommitTree.get).getOrElse(""))
+
+      val commitMapAllFiles = (indexPaths zip commitHashes).toMap
+      val commitMap = commitMapAllFiles.filter(_._2 != "")
+
+      // keep from the files already committed those were modified after (hash in index is different in commit)
+      val indexMap = getIndexAsMap(repoPath)
+      commitMap.filter(element => indexMap(element._1) != element._2).keys.toList
+    }
   }
 
   def getAllRepoFiles(repoPath: String) : List[String] = {

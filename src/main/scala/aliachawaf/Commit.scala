@@ -25,9 +25,7 @@ object Commit {
     val indexPathsSorted = indexPaths.sortBy(path => path.length).reverse
 
     // Create Map index
-    val keys = indexLines.map(line => line.split(" ")(1))
-    val values = indexLines.map(line => line.split(" ")(0))
-    val indexContent = (keys zip values).toMap
+    val indexContent = IndexUtil.getIndexAsMap(repoPath)
 
     //
     val commitTreeHash = createCommitTree(repoPath, indexPathsSorted, indexContent, indexPathsSorted.head.length)

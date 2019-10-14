@@ -59,6 +59,4 @@ class StatusTest extends FlatSpec with BeforeAndAfterEach {
     val filesAfterAdd = get_Tracked_Modified_NotAdded(currentDir)
   //  assert(!files.contains("testDir" + separator + "testFile1"))
   }
-
-
 }

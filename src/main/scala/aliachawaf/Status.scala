@@ -3,7 +3,7 @@ package aliachawaf
 import java.io.File
 import java.nio.file.Paths
 
-import aliachawaf.util.{CommitUtil, FileUtil, IndexUtil, ObjectUtil, ResultUtil}
+import aliachawaf.util.{BranchUtil, CommitUtil, FileUtil, IndexUtil, ObjectUtil, ResultUtil}
 import aliachawaf.util.IndexUtil._
 
 import scala.reflect.io.Path
@@ -12,12 +12,18 @@ object Status {
 
   def status(currentDir: String): String = {
 
-    ResultUtil.statusResult(
-      get_Tracked_Modified_NotAdded(currentDir),
-      get_Tracked_Committed_Modified(currentDir),
-      get_Tracked_NeverCommitted(currentDir),
-      get_Untracked(currentDir)
-    )
+    val repoPath = Repository.getRepoPath(currentDir).get
+    val branch = BranchUtil.getCurrentBranch(repoPath)
+
+    if (CommitUtil.getLastCommit(repoPath, branch).isDefined) {
+      ResultUtil.statusResult(
+        get_Tracked_Modified_NotAdded(currentDir),
+        get_Tracked_Committed_Modified(currentDir),
+        get_Tracked_NeverCommitted(currentDir),
+        get_Untracked(currentDir)
+      )
+    }
+    else ResultUtil.statusNoCommit(repoPath)
   }
 
   /**
@@ -37,7 +43,7 @@ object Status {
    * @return the list (paths) of the tracked and modified files (modified after been added in .sgit/INDEX)
    */
   def get_Tracked_Modified_NotAdded(currentDir: String): List[String] = {
-
+    println("TRACKED NOT ADDED")
     val repoPath = Repository.getRepoPath(currentDir).get
     val indexLines = getIndexContent(repoPath)
     val index = indexLines mkString "\n"
@@ -45,14 +51,20 @@ object Status {
     val allRepoFiles = getAllRepoFiles(repoPath)
 
     val tracked = allRepoFiles.filter(index.contains(_))
-
+    println(tracked)
     val newHashTracked = tracked.map(path => ObjectUtil.hash(FileUtil.getFileContent(repoPath + File.separator + path) mkString "\n"))
     val mapNewHash = (tracked zip newHashTracked).toMap
 
     val mapOldHash = getIndexAsMap(repoPath)
 
-    val trackedModifedFiles = mapNewHash.filter(path => mapOldHash(path._1) != path._2)
-    toRelativePaths(trackedModifedFiles.keys.toList.map(repoPath + File.separator + _), currentDir)
+    val trackedModifedFiles =
+      mapNewHash
+        .filter(path => mapOldHash(path._1) != path._2)
+        .keys
+        .toList
+        .map(repoPath + File.separator + _)
+    println("attention" + trackedModifedFiles)
+    toRelativePaths(trackedModifedFiles, currentDir)
   }
 
 
@@ -107,7 +119,11 @@ object Status {
       .toList
   }
 
-  def toRelativePaths(absolutePaths: List[String], currentDir: String) : List[String] = {
-    absolutePaths.map(p => Paths.get(currentDir).relativize(Paths.get((new File(p)).getAbsolutePath)).toString)
+  def toRelativePaths(absolutePaths: List[String], currentDir: String): List[String] = {
+    println(absolutePaths)
+    println(currentDir)
+    val test = absolutePaths.map(p => Paths.get(currentDir).relativize(Paths.get(p)).toString)
+    println("PUNAISE : " + test)
+    test
   }
 }

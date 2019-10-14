@@ -15,7 +15,6 @@ object Tag {
 
     // Check if there is a commit, else no tag can be created
     if (lastCommit.isDefined) {
-
       val tagPath = repoPath + separator + ".sgit" + separator + "tags" + separator + name
 
       if (new File(tagPath).exists()) tagResult(created = false, name)

@@ -15,25 +15,29 @@ object Commit {
    */
   def commit(repoPath: String, commitMsg: String): String = {
 
-    // Get .sgit/INDEX content
-    val indexLines = IndexUtil.getIndexContent(repoPath)
+    if (Repository.hasIndexFile(repoPath)) {
 
-    // Keep only paths form index lines and split by path elements
-    val indexPaths = indexLines.map(l => l.split(" ")(1).split(File.separator))
+      // Get .sgit/INDEX content
+      val indexLines = IndexUtil.getIndexContent(repoPath)
 
-    // Sort index content by descending length
-    val indexPathsSorted = indexPaths.sortBy(path => path.length).reverse
+      // Keep only paths form index lines and split by path elements
+      val indexPaths = indexLines.map(l => l.split(" ")(1).split(File.separator))
 
-    // Create Map index
-    val indexContent = IndexUtil.getIndexAsMap(repoPath)
+      // Sort index content by descending length
+      val indexPathsSorted = indexPaths.sortBy(path => path.length).reverse
 
-    //
-    val commitTreeHash = createCommitTree(repoPath, indexPathsSorted, indexContent, indexPathsSorted.head.length)
+      // Create Map index
+      val indexContent = IndexUtil.getIndexAsMap(repoPath)
 
-    // Add commit object in .sgit/objects
-    addCommitInObjects(repoPath, commitTreeHash, commitMsg)
+      //
+      val commitTreeHash = createCommitTree(repoPath, indexPathsSorted, indexContent, indexPathsSorted.head.length)
+
+      // Add commit object in .sgit/objects
+      addCommitInObjects(repoPath, commitTreeHash, commitMsg)
+    }
+
+    else ResultUtil.nothingToCommit(repoPath)
   }
-
 
   /**
    *
@@ -42,7 +46,7 @@ object Commit {
    * @param commitMsg      : message of the commit
    * @return the msg to display to the user after sgit commit
    */
-  def addCommitInObjects(repoPath: String, commitTreeHash: String, commitMsg: String): String = {
+  def addCommitInObjects(repoPath: String, commitTreeHash: String, commitMsg: String) = {
 
     /** Commit content :
      *    - tree hash

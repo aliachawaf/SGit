@@ -77,13 +77,13 @@ class RepositoryTest extends FlatSpec with BeforeAndAfterEach {
   it should "not initialize a directory already initialized" in {
     // Reinitialize current directory
     val currentDir = System.getProperty("user.dir")
-    assert(!Repository.initialize(currentDir))
+    assert(Repository.initialize(currentDir) == "Already initialized SGit repository")
 
     // Initialize new test directory
     val testDir = Repository.getRepoPath(currentDir).get + File.separator + "testDir"
     new File(testDir).mkdir()
-    assert(Repository.initialize(testDir))
-    assert(!Repository.initialize(testDir))
+    assert(Repository.initialize(testDir) != "Already initialized SGit repository")
+    assert(Repository.initialize(testDir) == "Already initialized SGit repository")
   }
 
   // TODO

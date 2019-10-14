@@ -31,7 +31,7 @@ class TagTest extends FlatSpec with BeforeAndAfterEach {
     Directory(new File(repoPath + File.separator + "testDir")).deleteRecursively()
   }
 
-  "A Tag" should "create a file tag in .sgit/tags with the right name and content" in {
+  "The tag command" should "create a file tag in .sgit/tags with the right name and content" in {
 
     val currentDir = System.getProperty("user.dir")
     val repoPath = Repository.getRepoPath(currentDir).get

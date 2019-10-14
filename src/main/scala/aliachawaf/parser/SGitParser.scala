@@ -68,10 +68,7 @@ object SGitParser {
             else notSGitRepository()
 
           case "commit" =>
-            if (Repository.isInRepository(currentDirectory)) {
-              if (Repository.hasIndexFile(repoPath.get)) Commit.commit(repoPath.get, config.arguments)
-              else noIndex()
-            }
+            if (Repository.isInRepository(currentDirectory)) Commit.commit(repoPath.get, config.arguments)
             else notSGitRepository()
 
           case "status" =>

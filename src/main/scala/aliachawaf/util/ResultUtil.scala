@@ -8,7 +8,7 @@ object ResultUtil {
 
   def notSGitRepository(): String = "fatal: not a sgit repository (or any of the parent directories): .sgit"
 
-  def noIndex(): String = "nothing to commit"
+  def nothingToCommit(repoPath: String) = "On branch " + BranchUtil.getCurrentBranchName(repoPath) + "/n/n nothing to commit"
 
   def initResult(result: Boolean, currentDir: String): String = {
     if (result) "Initialized empty Sgit repository in " + currentDir + File.separator + ".sgit" + File.separator
@@ -16,7 +16,7 @@ object ResultUtil {
   }
 
   // TODO Add files deletions and additions
-  def commitResult(branch: String, hash: String, message: String): String = "[" + branch + " " + hash.slice(0, 7) + "] " + message + "\n "
+  def commitResult(branch: String, hash: String, message: String) = "[" + branch + " " + hash.slice(0, 7) + "] " + message + "\n "
 
   def sameCommitResult(branch: String): String = "On branch " + branch + "\nNothing to commit, working tree clean."
 
@@ -34,13 +34,15 @@ object ResultUtil {
       "\n\n"
   }
 
-  def tagResult(created: Boolean, name: String) : String = {
+  def statusNoCommit(repoPath: String) = "On branch " + BranchUtil.getCurrentBranchName(repoPath) + "\n\nNo commits yet."
+
+  /** TAG **/
+  def tagResult(created: Boolean, name: String) = {
     if (created) "Tag '" + name + "' created"
     else "fatal: tag '" + name + "' already exists"
   }
 
-  def tagNoCommit(): String = "fatal: Failed to resolve 'HEAD' as a valid ref (i.e. there is no commit to tag)."
-
+  def tagNoCommit() = "fatal: Failed to resolve 'HEAD' as a valid ref (i.e. there is no commit to tag)."
 
 
 }

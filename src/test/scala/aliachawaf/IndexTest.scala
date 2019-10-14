@@ -2,9 +2,10 @@ package aliachawaf
 
 import java.io.File
 
-import aliachawaf.util.{FileUtil, ObjectUtil}
+import aliachawaf.util.{FileUtil, IndexUtil, ObjectUtil}
 import org.scalatest.{BeforeAndAfterEach, FlatSpec}
 import aliachawaf.Index.add
+
 import scala.reflect.io.Directory
 
 class IndexTest extends FlatSpec with BeforeAndAfterEach {
@@ -113,14 +114,13 @@ class IndexTest extends FlatSpec with BeforeAndAfterEach {
 
     // Edit testFile1 and add it
     val pathFile1 = repoPath + File.separator + "testDir" + File.separator + "testFile1"
-    FileUtil.writeFile(new File(pathFile1), ("New Hello, World!").getBytes.toList, append = false)
+    FileUtil.writeFile(new File(pathFile1), ("Second Hello, World!").getBytes.toList, append = true)
     add(Seq("testDir/testFile1"), repoPath)
 
     val newContent = FileUtil.getFileContent(pathFile1) mkString "\n"
     val newHash = ObjectUtil.hash(newContent)
 
     val indexLines = FileUtil.getFileContent(repoPath + File.separator + ".sgit" + File.separator + "INDEX")
-
     assert(indexLines(0) == (newHash + " " + "testDir/testFile1"))
   }
 
@@ -130,5 +130,21 @@ class IndexTest extends FlatSpec with BeforeAndAfterEach {
     add(Seq("anything"), repoPath)
     val indexLines = FileUtil.getFileContent(repoPath + File.separator + ".sgit" + File.separator + "INDEX")
     assert(indexLines.isEmpty)
+  }
+
+  it should "remove files deleted from .sgit/INDEX" in {
+    val currentDir = System.getProperty("user.dir")
+    val repoPath = Repository.getRepoPath(currentDir).get
+    println("TEST1")
+    add(Seq("testDir/testFile1", "testDir/testFile2"), repoPath)
+
+    println("TEST2")
+    new File("testDir/testFile1").delete()
+    add(Seq("testDir/testFile1"), repoPath)
+
+    val indexLines = IndexUtil.getIndexContent(repoPath)
+    val indexPaths = IndexUtil.getIndexPaths(repoPath)
+    assert(indexLines.length == 1)
+    assert(indexPaths(0) != "testDir/testFile1")
   }
 }

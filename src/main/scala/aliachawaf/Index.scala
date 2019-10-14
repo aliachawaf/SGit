@@ -2,7 +2,7 @@ package aliachawaf
 
 import java.io.File
 
-import aliachawaf.util.{FileUtil, IndexUtil, ObjectUtil}
+import aliachawaf.util.{FileUtil, IndexUtil, ObjectUtil, ResultUtil}
 
 object Index {
 
@@ -19,8 +19,8 @@ object Index {
       new File(sgitPath + File.separator + "INDEX").createNewFile()
     }
 
-    val filesCurrentDirectory = arguments.map(f => new File(f)).filter(_.isFile)
-    val directoriesCurrentDirectory = arguments.map(f => new File(f)).filter(_.isDirectory)
+    val filesCurrentDirectory = arguments.map(new File(_)).filter(_.isFile)
+    val directoriesCurrentDirectory = arguments.map(new File(_)).filter(_.isDirectory)
 
     val allFilesCurrentDirectory = filesCurrentDirectory ++ directoriesCurrentDirectory.flatMap(FileUtil.recursiveListFiles).toList
 
@@ -31,15 +31,17 @@ object Index {
     val allFilesPaths = allFilesToAdd.map(_.getAbsolutePath.replace(repoPath + File.separator, ""))
 
     // Create blobs in .sgit/objects and add them in .sgit/INDEX file
-    allFilesPaths.foreach(path => addBlobInObjects(path, repoPath))
+    allFilesPaths.foreach(addBlobInObjects(_, repoPath))
 
-    ""
+    val filesNotFound = arguments.map(new File(_)).filter(!_.exists()).map(_.getAbsolutePath.replace(repoPath + File.separator, ""))
+    filesNotFound.foreach(removePathAlreadyIndexed(_, repoPath))
+
+    ResultUtil.addResult(allFilesPaths.length)
   }
 
   def addBlobInObjects(filePath: String, repoPath: String): Unit = {
 
     // Get file content in order to hash it
-    //val fileAbsolutePath = repoPath + File.separator + filePath
     val lines = FileUtil.getFileContent(repoPath + File.separator + filePath).mkString
 
     // Hash content to use it as a blob's id
@@ -60,26 +62,26 @@ object Index {
 
   def updateIndex(hashedID: String, filePath: String, repoPath: String): Unit = {
 
-    val indexPath = repoPath + File.separator + ".sgit" + File.separator + File.separator + "INDEX"
-    removePathAlreadyIndexed(hashedID, filePath, repoPath)
+    val indexPath = repoPath + File.separator + ".sgit" + File.separator + "INDEX"
+    removePathAlreadyIndexed(filePath, repoPath)
 
     val indexContent = hashedID + " " + filePath + "\n"
     FileUtil.writeFile(new File(indexPath), indexContent.getBytes.toList, append = true)
   }
 
   /* Remove lines of .sgit/INDEX which contains  */
-  def removePathAlreadyIndexed(hashedID: String, filePath: String, repoPath: String): Unit = {
-
+  def removePathAlreadyIndexed(filePath: String, repoPath: String): Unit = {
     // Get INDEX content as a String
-    val indexPath = repoPath + File.separator + ".sgit" + File.separator + File.separator + "INDEX"
-    val indexLines = IndexUtil.getIndexContent(repoPath).mkString
+    val indexPath = repoPath + File.separator + ".sgit" + File.separator + "INDEX"
+    val indexLines = IndexUtil.getIndexContent(repoPath)
+    val indexString = indexLines mkString "\n"
 
     // Check if INDEX content contains the filePath,
     // if yes we have to remove it in order to replace it with the new version (new hashed id)
-    if (indexLines.contains(filePath)) {
-      val indexLinesList = indexLines.split("\n").toList.filter(_.split(" ")(1) == filePath) mkString "\n"
-      FileUtil.writeFile(new File(indexPath), "".getBytes.toList, append = false)
-      FileUtil.writeFile(new File(indexPath), indexLinesList.getBytes.toList, append = true)
+    if (indexString.contains(filePath)) {
+      val indexLinesWithoutFile = indexLines.filterNot(_.split(" ")(1) == filePath)
+      if (indexLinesWithoutFile.isEmpty) FileUtil.writeFile(new File(indexPath), "".getBytes.toList, append = false)
+      else FileUtil.writeFile(new File(indexPath), ((indexLinesWithoutFile mkString "\n") + "\n").getBytes.toList, append = false)
     }
   }
 

@@ -8,6 +8,8 @@ object ResultUtil {
 
   def notSGitRepository(): String = "fatal: not a sgit repository (or any of the parent directories): .sgit"
 
+  def addResult(nbFiles: Int) = nbFiles + " file(s) added to index."
+
   def nothingToCommit(repoPath: String) = "On branch " + BranchUtil.getCurrentBranchName(repoPath) + "/n/n nothing to commit"
 
   def initResult(result: Boolean, currentDir: String): String = {

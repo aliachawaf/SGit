@@ -135,10 +135,8 @@ class IndexTest extends FlatSpec with BeforeAndAfterEach {
   it should "remove files deleted from .sgit/INDEX" in {
     val currentDir = System.getProperty("user.dir")
     val repoPath = Repository.getRepoPath(currentDir).get
-    println("TEST1")
     add(Seq("testDir/testFile1", "testDir/testFile2"), repoPath)
 
-    println("TEST2")
     new File("testDir/testFile1").delete()
     add(Seq("testDir/testFile1"), repoPath)
 

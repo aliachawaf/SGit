@@ -32,7 +32,13 @@ object Status {
   def get_Untracked(currentDir: String): List[String] = {
 
     val repoPath = Repository.getRepoPath(currentDir).get
-    val allRepoFiles = getAllRepoFiles(repoPath)
+    val allRepoFiles =
+      FileUtil.recursiveListFiles(new File(repoPath))
+        .filter(_.isFile)
+        .filter(!_.getAbsolutePath.contains(".sgit"))
+        .map(_.getAbsolutePath.replace(repoPath + File.separator, ""))
+        .toList
+
     val indexContent = getIndexContent(repoPath) mkString "\n"
 
     val untracked = allRepoFiles.filter(!indexContent.contains(_)).map(repoPath + File.separator + _)
@@ -43,15 +49,11 @@ object Status {
    * @return the list (paths) of the tracked and modified files (modified after been added in .sgit/INDEX)
    */
   def get_Tracked_Modified_NotAdded(currentDir: String): List[String] = {
-    println("TRACKED NOT ADDED")
     val repoPath = Repository.getRepoPath(currentDir).get
     val indexLines = getIndexContent(repoPath)
     val index = indexLines mkString "\n"
 
-    val allRepoFiles = getAllRepoFiles(repoPath)
-
-    val tracked = allRepoFiles.filter(index.contains(_))
-    println(tracked)
+    val tracked = getIndexPaths(repoPath)
     val newHashTracked = tracked.map(path => ObjectUtil.hash(FileUtil.getFileContent(repoPath + File.separator + path) mkString "\n"))
     val mapNewHash = (tracked zip newHashTracked).toMap
 
@@ -63,7 +65,7 @@ object Status {
         .keys
         .toList
         .map(repoPath + File.separator + _)
-    println("attention" + trackedModifedFiles)
+
     toRelativePaths(trackedModifedFiles, currentDir)
   }
 
@@ -86,6 +88,7 @@ object Status {
 
   /**
    * @return the list (paths) of the tracked committed and modified files
+   *         (ie files added, but different from the last commit)
    */
   def get_Tracked_Committed_Modified(currentDir: String): List[String] = {
 
@@ -97,10 +100,10 @@ object Status {
 
       // get hash of files already committed before
       val indexPaths = getIndexPaths(repoPath)
-      val commitHashes = indexPaths.map(path => CommitUtil.getBlobHashCommitted(repoPath, path.split(File.separator).toList, lastCommitTree.get).getOrElse(""))
+      val commitHashes = indexPaths.map(path => CommitUtil.getBlobHashCommitted(repoPath, path.split(File.separator).toList, lastCommitTree.get).getOrElse("never committed"))
 
       val commitMapAllFiles = (indexPaths zip commitHashes).toMap
-      val commitMap = commitMapAllFiles.filter(_._2 != "")
+      val commitMap = commitMapAllFiles.filter(_._2 != "never committed")
 
       // keep from the files already committed those were modified after (hash in index is different in commit)
       val indexMap = getIndexAsMap(repoPath)
@@ -109,21 +112,8 @@ object Status {
     }
   }
 
-  def getAllRepoFiles(currentDir: String): List[String] = {
-
-    val repoPath = Repository.getRepoPath(currentDir).get
-    FileUtil.recursiveListFiles(new File(repoPath))
-      .filter(_.isFile)
-      .filter(!_.getAbsolutePath.contains(".sgit"))
-      .map(_.getAbsolutePath.replace(repoPath + File.separator, ""))
-      .toList
-  }
-
   def toRelativePaths(absolutePaths: List[String], currentDir: String): List[String] = {
-    println(absolutePaths)
-    println(currentDir)
     val test = absolutePaths.map(p => Paths.get(currentDir).relativize(Paths.get(p)).toString)
-    println("PUNAISE : " + test)
     test
   }
 }

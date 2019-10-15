@@ -1,11 +1,12 @@
 package aliachawaf
 
+import scala.annotation.tailrec
+
 object Diff {
 
   def diff(repoPath: String) = {
 
   }
-
 
   def getMatrixOfComparison(newFile: List[String], oldFile: List[String]): Map[(Int, Int), Int] = {
 
@@ -27,7 +28,7 @@ object Diff {
         val oldContent = oldFile(oldLine - 1)
 
         if (newContent == oldContent) {
-          val value = matrix((newLine - 1, oldLine - 1))
+          val value = matrix((newLine - 1, oldLine - 1)) + 1
           loop(newLine, oldLine + 1, matrix + ((newLine, oldLine) -> value))
         }
         else {
@@ -39,4 +40,43 @@ object Diff {
 
     loop(0, 0, Map())
   }
+
+  def getDiffLines(matrix: Map[(Int, Int), Int], sizeNewFile: Int, sizeOldFile: Int): List[(String, Int)] = {
+
+    @tailrec
+    def loop(newLine: Int, oldLine: Int, listDiff: List[(String, Int)]): List[(String, Int)] = {
+
+      // All matrix treated
+      if (newLine == 0 && oldLine == 0)
+        listDiff
+
+      // If we are on the first line, we go "left" till the end
+      else if (newLine == 0)
+        loop(newLine, oldLine - 1, ("-", oldLine) :: listDiff)
+
+      // If we are on the first column, we go "up" till the end
+      else if (oldLine == 0)
+        loop(newLine - 1, oldLine, ("+", newLine) :: listDiff)
+
+      else {
+        // We compare the element on the top and the element of the left
+        if (matrix((newLine, oldLine - 1)) == matrix((newLine - 1, oldLine))) {
+          // if they are equal, we check the element on top left diagonal
+          if ((matrix(newLine, oldLine) - 1) == matrix(newLine - 1, oldLine - 1))
+            loop(newLine - 1, oldLine - 1, listDiff)
+          else
+            loop(newLine, oldLine - 1, ("-", oldLine) :: listDiff)
+        }
+
+        else if (matrix((newLine - 1, oldLine)) > matrix((newLine, oldLine - 1)))
+          loop(newLine - 1, oldLine, ("+", newLine) :: listDiff)
+
+        else
+          loop(newLine, oldLine - 1, ("-", oldLine) :: listDiff)
+      }
+    }
+
+    loop(sizeNewFile, sizeOldFile, List())
+  }
+
 }

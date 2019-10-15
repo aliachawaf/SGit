@@ -7,6 +7,8 @@ import aliachawaf.util.FileUtil
 import aliachawaf.Diff._
 import org.scalatest.{BeforeAndAfterEach, FlatSpec}
 
+import scala.reflect.io.Directory
+
 class DiffTest extends FlatSpec with BeforeAndAfterEach {
 
   /** Before each test, we initialize the sgit repository with test files */
@@ -19,6 +21,16 @@ class DiffTest extends FlatSpec with BeforeAndAfterEach {
     new File(testDir).mkdir()
     FileUtil.createNewFile(testDir + File.separator + "testFile1", "A\nL\nI\nA\n")
     FileUtil.createNewFile(testDir + File.separator + "testFile2", "B\nA\nL\nI\nR\nE")
+
+    Index.add(Seq("testDir/testFile1"), repoPath)
+  }
+
+  // We delete the sgit repository created after each test
+  override def afterEach(): Unit = {
+    val currentDir = System.getProperty("user.dir")
+    val repoPath = Repository.getRepoPath(currentDir).get
+    Directory(new File(repoPath + File.separator + ".sgit")).deleteRecursively()
+    Directory(new File(repoPath + File.separator + "testDir")).deleteRecursively()
   }
 
   "Diff command" should "construct the matrix of the longest common sequence" in {
@@ -28,13 +40,6 @@ class DiffTest extends FlatSpec with BeforeAndAfterEach {
 
     val newFileContent = FileUtil.getFileContent(repoPath + separator + "testDir" + separator + "testFile2")
     val oldFileContent = FileUtil.getFileContent(repoPath + separator + "testDir" + separator + "testFile1")
-
-    val matrix = getMatrixOfComparison(newFileContent, oldFileContent)
-    val diff = getDiffLines(matrix, newFileContent.length, oldFileContent.length)
-
-    println(matrix)
-    println(diff)
-
 
   }
 

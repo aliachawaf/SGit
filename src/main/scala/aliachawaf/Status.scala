@@ -3,7 +3,7 @@ package aliachawaf
 import java.io.File
 import java.nio.file.Paths
 
-import aliachawaf.util.{BranchUtil, CommitUtil, FileUtil, ObjectUtil, ResultUtil}
+import aliachawaf.util.{BranchUtil, CommitUtil, FileUtil, IndexUtil, ObjectUtil, ResultUtil}
 import aliachawaf.util.IndexUtil._
 
 import scala.reflect.io.Path
@@ -110,25 +110,30 @@ object Status {
   /**
    *
    * @return the files (relative paths) tracked but not present in working tree
+   *         ( ie removed from sgit repository, but still in index)
    */
   def get_Deleted_NotAdded(currentDir: String, repoPath: String): List[String] = {
     val indexPathsNotFound = getIndexPaths(repoPath).filter(!new File(_).exists())
     toRelativePaths(indexPathsNotFound, currentDir, repoPath)
   }
 
-  // TODO
   /**
    *
-   * @return the files deleted but ???
+   * @return the files deleted (removed from index) but still in commit tree
    */
-  def get_Deleted_?????????(currentDir: String, repoPath: String): List[String] = {
+  def get_Deleted_NotCommitted(currentDir: String, repoPath: String): List[String] = {
 
     val branch = BranchUtil.getCurrentBranchName(repoPath)
     val lastCommitTree = CommitUtil.getLastCommit(repoPath, branch)
 
     if (lastCommitTree.isEmpty) List()
-    else List()
+    else {
+      val commitTreeAsMap = CommitUtil.getCommitAsMap(repoPath, lastCommitTree.get)
+      val indexAsMap = IndexUtil.getIndexAsMap(repoPath)
 
+      val list = commitTreeAsMap.keys.toList diff indexAsMap.keys.toList
+      toRelativePaths(list, currentDir, repoPath)
+    }
   }
 
   def toRelativePaths(paths: List[String], currentDir: String, repoPath: String): List[String] = {

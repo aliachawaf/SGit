@@ -46,5 +46,12 @@ object ResultUtil {
 
   def tagNoCommit() = "fatal: Failed to resolve 'HEAD' as a valid ref (i.e. there is no commit to tag)."
 
+  /** TAG **/
+  def branchResult(created: Boolean, name: String) = {
+    if (created) "Branch '" + name + "' created"
+    else "fatal: branch named '" + name + "' already exists"
+  }
+
+  def branchNoMaster() = "fatal: Not a valid object name: 'master'."
 
 }

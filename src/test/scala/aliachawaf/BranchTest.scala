@@ -7,8 +7,7 @@ import org.scalatest.{BeforeAndAfterEach, FlatSpec}
 
 import scala.reflect.io.Directory
 
-class TagTest extends FlatSpec with BeforeAndAfterEach {
-
+class BranchTest extends FlatSpec with BeforeAndAfterEach {
   /** Before each test, we initialize the sgit repository with test files */
   override def beforeEach(): Unit = {
     val currentDir = System.getProperty("user.dir")
@@ -31,7 +30,7 @@ class TagTest extends FlatSpec with BeforeAndAfterEach {
     Directory(new File(repoPath + File.separator + "testDir")).deleteRecursively()
   }
 
-  "The tag command" should "create a file tag in .sgit/tags with the right name and content" in {
+  "The branch command" should "create a file branch in .sgit/branches with the right name and content" in {
 
     val currentDir = System.getProperty("user.dir")
     val repoPath = Repository.getRepoPath(currentDir).get
@@ -39,45 +38,49 @@ class TagTest extends FlatSpec with BeforeAndAfterEach {
     Commit.commit(repoPath, "message")
     val lastCommit = CommitUtil.getLastCommit(repoPath, BranchUtil.getCurrentBranch(repoPath)).get
 
-    val tagResult = Tag.tag(repoPath, "tagTest")
-    val tagPath = repoPath + File.separator + ".sgit" + File.separator + "tags" + File.separator + "tagTest"
+    val branchResult = Branch.createNewBranch(repoPath, "newBranch")
+    val branchPath = repoPath + File.separator + ".sgit" + File.separator + "branches" + File.separator + "newBranch"
 
-    assert(tagResult == "Tag 'tagTest' created")
-    assert(new File(tagPath).exists())
-    assert((FileUtil.getFileContent(tagPath) mkString "\n") == lastCommit)
+    assert(branchResult == "Branch 'newBranch' created")
+    assert(new File(branchPath).exists())
+    assert((FileUtil.getFileContent(branchPath) mkString "\n") == lastCommit)
   }
 
-  it should "not create a tag if there is no commit" in {
+  it should "not create a branch if there is no commit" in {
 
     val currentDir = System.getProperty("user.dir")
     val repoPath = Repository.getRepoPath(currentDir).get
 
-    val tagResult = Tag.tag(repoPath, "tagTest")
+    val branchResult = Branch.createNewBranch(repoPath, "newBranch")
+    val branchPath = repoPath + File.separator + ".sgit" + File.separator + "branches" + File.separator + "newBranch"
 
-    val tagPath = repoPath + File.separator + ".sgit" + File.separator + "tags" + File.separator + "tagTest"
-    assert(!new File(tagPath).exists())
-    assert(tagResult == "fatal: Failed to resolve 'HEAD' as a valid ref (i.e. there is no commit to tag).")
+    assert(!new File(branchPath).exists())
+    assert(branchResult == "fatal: Not a valid object name: 'master'.")
   }
 
-  it should "not update a tag if it already exists" in {
+  it should "not update a branch if it already exists" in {
 
     val currentDir = System.getProperty("user.dir")
     val repoPath = Repository.getRepoPath(currentDir).get
 
     Commit.commit(repoPath, "message")
 
-    Tag.tag(repoPath, "tagTest")
-    val tagPath = repoPath + File.separator + ".sgit" + File.separator + "tags" + File.separator + "tagTest"
-    val tagContent = FileUtil.getFileContent(tagPath)
+    Branch.createNewBranch(repoPath, "newBranch")
+    val branchPath = repoPath + File.separator + ".sgit" + File.separator + "branches" + File.separator + "newBranch"
+    val branchContent = FileUtil.getFileContent(branchPath)
 
     Index.add(Seq("testDir/testFile2"), repoPath)
     Commit.commit(repoPath, "message")
     CommitUtil.getLastCommit(repoPath, BranchUtil.getCurrentBranch(repoPath)).get
 
-    val tagResult = Tag.tag(repoPath, "tagTest")
-    val tagContent2 = FileUtil.getFileContent(tagPath)
+    val branchResult = Branch.createNewBranch(repoPath, "newBranch")
+    val branchContent2 = FileUtil.getFileContent(branchPath)
 
-    assert(tagContent == tagContent2)
-    assert(tagResult == "fatal: tag 'tagTest' already exists")
+    assert(branchContent == branchContent2)
+    assert(branchResult == "fatal: branch named 'newBranch' already exists")
   }
+
+
+
+
 }

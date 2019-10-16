@@ -3,7 +3,7 @@ package aliachawaf.parser
 import java.io.File
 
 import aliachawaf.util.ResultUtil._
-import aliachawaf.{Commit, Index, Repository, Status, Tag}
+import aliachawaf.{Commit, Diff, Index, Repository, Status, Tag}
 import scopt.OParser
 
 object SGitParser {
@@ -51,7 +51,10 @@ object SGitParser {
             .maxOccurs(1)
             .action((x, c) => c.copy(name = x))
             .text("unique name of the tag")
-        )
+        ),
+      cmd("diff")
+        .action((_, c) => c.copy(mode = "diff"))
+        .text("Show changes between working tree and tracked files\n"),
     )
   }
 
@@ -77,6 +80,10 @@ object SGitParser {
 
           case "tag" =>
             if (Repository.isInRepository(currentDirectory)) Tag.tag(repoPath.get, config.name)
+            else notSGitRepository()
+
+          case "diff" =>
+            if (Repository.isInRepository(currentDirectory)) Diff.diff(repoPath.get)
             else notSGitRepository()
 
           case _ => "TO DO"

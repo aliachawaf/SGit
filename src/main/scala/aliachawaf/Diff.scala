@@ -3,6 +3,7 @@ package aliachawaf
 import java.io.File
 
 import aliachawaf.util.{CommitUtil, FileUtil, IndexUtil}
+import Console.{GREEN, RED, RESET}
 
 import scala.annotation.tailrec
 
@@ -96,11 +97,11 @@ object Diff {
         case Nil => result
         case head :: tail => {
           if (head._1 == "++") {
-            val newLine = "(line " + head._2 + " " + head._1 + ") " + newFile(head._2 - 1)
+            val newLine = GREEN + "(line " + head._2 + " " + head._1 + ") " + newFile(head._2 - 1) + RESET
             loop(result + newLine + "\n", tail)
           }
           else {
-            val deletedLine = "(line " + head._2 + " " + head._1 + ") " + oldFile(head._2 - 1)
+            val deletedLine = RED + "(line " + head._2 + " " + head._1 + ") " + oldFile(head._2 - 1) + RESET
             loop(result + deletedLine + "\n", tail)
           }
         }
@@ -120,14 +121,8 @@ object Diff {
         case headCouple :: tail =>
 
           // Content of file in working tree
-          //val newFile = FileUtil.getFileContent(repoPath + File.separator + path)
-
           val newFile = FileUtil.getFileContent(headCouple._1)
           val oldFile = FileUtil.getFileContent(headCouple._2)
-
-          // Content of file in index
-          //val blob = indexedMap(path)
-          //val oldFile = FileUtil.getFileContent(repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + blob)
 
           // Get diff for the file
           val matrix = getMatrixOfComparison(newFile, oldFile)
@@ -142,7 +137,52 @@ object Diff {
     }
 
     loop(listNewOld, "")
+  }
 
-    //loop(IndexUtil.getIndexPaths(repoPath), "")
+
+  def getDiffAllFilesOptionStat(listNewOld: List[(String, String, String)], repoPath: String): String = {
+    @tailrec
+    def loop(currentListNewOld: List[(String, String, String)],
+             result: String,
+             accFilesModified: Int,
+             accAdditions: Int,
+             accDeletions: Int
+            ): String = {
+
+      currentListNewOld match {
+        case Nil => result + accFilesModified + " file(s) changed, " + accAdditions + " insertions(++), " + accDeletions + " deletions(--)\n"
+
+        case headCouple :: tail =>
+
+          // Content of file in working tree
+          val newFile = FileUtil.getFileContent(headCouple._1)
+          val oldFile = FileUtil.getFileContent(headCouple._2)
+
+          // Get diff for the file
+          val matrix = getMatrixOfComparison(newFile, oldFile)
+          val diffLines = getDiffLines(matrix, newFile.length, oldFile.length)
+
+
+          if (diffLines.isEmpty) loop(tail, result, accFilesModified, accAdditions, accDeletions)
+
+          else {
+
+            val accAdditionsUpdated = diffLines.count(_._1 == "++")
+            val accDeletionsUpdated = diffLines.count(_._1 == "--")
+            val totalDiff = accAdditionsUpdated+accDeletionsUpdated
+
+            val fileStat =
+              totalDiff + " : " +
+              GREEN + accAdditionsUpdated + "++ " + RESET +
+              RED + accDeletionsUpdated + "--" + RESET +
+              "\n"
+
+            val diffResult = headCouple._3.replace(repoPath + File.separator, "") + " | " + fileStat
+            loop(tail, result + diffResult, accFilesModified + 1, accAdditionsUpdated, accDeletionsUpdated)
+          }
+      }
+    }
+
+    loop(listNewOld, "", 0, 0, 0)
   }
 }

@@ -18,7 +18,9 @@ object Status {
     if (CommitUtil.getLastCommit(repoPath, branch).isDefined) {
       ResultUtil.statusResult(
         get_Tracked_Modified_NotAdded(currentDir, repoPath),
+        get_Deleted_NotAdded(currentDir, repoPath),
         get_Tracked_Committed_Modified(currentDir, repoPath),
+        get_Deleted_NotCommitted(currentDir, repoPath),
         get_Tracked_NeverCommitted(currentDir, repoPath),
         get_Untracked(currentDir, repoPath)
       )

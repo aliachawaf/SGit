@@ -19,7 +19,7 @@ object Log {
     }
   }
 
-  def logP(repoPath: String): String = {
+  def logOption(repoPath: String, option: String): String = {
 
     val currentBranch = BranchUtil.getCurrentBranch(repoPath)
     val lastCommit = CommitUtil.getLastCommit(repoPath, currentBranch)
@@ -27,7 +27,11 @@ object Log {
     if (lastCommit.isEmpty) logNotCommit()
     else {
       val allCommits = getCommitLog(repoPath, lastCommit.get)
-      logOptionP(allCommits, currentBranch, repoPath)
+
+      option match {
+        case "patch" => getLogOption(allCommits, repoPath, Diff.getDiffResultAllFiles)
+        case "stat" => getLogOption(allCommits, repoPath, Diff.getDiffAllFilesOptionStat)
+      }
     }
   }
 
@@ -74,8 +78,7 @@ object Log {
     "On branch " + branchName + "\n\n" + loop(commits, "")
   }
 
-
-  def logOptionP(commits: List[(String, String)], branchName: String, repoPath: String): String = {
+  def getLogOption(commits: List[(String, String)], repoPath: String, option: (List[(String, String, String)], String) => String): String = {
 
     @scala.annotation.tailrec
     def loop(currentCommits: List[(String, String)], result: String): String = {
@@ -102,11 +105,10 @@ object Log {
               getListTuple(newFiles, oldFiles)
                 .map(tuple => (repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + tuple._1, repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + tuple._2, tuple._3))
 
-            val diffWithParent = Diff.getDiffResultAllFiles(tuples, repoPath)
+            val diffWithParent = option(tuples, repoPath)
 
-            val resultUpdated = "commit " + head._1 + "\n     " + message + "\n" + diffWithParent + "\n\n" + result
+            val resultUpdated = Console.YELLOW + "commit " + head._1 + Console.RESET + "\n     " + message + "\n" + diffWithParent + "\n\n" + result
             loop(tail, resultUpdated)
-
           }
           else {
 
@@ -114,18 +116,18 @@ object Log {
               getListTuple(newFiles, Map().withDefaultValue(""))
                 .map(tuple => (repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + tuple._1, repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + tuple._2, tuple._3))
 
-            val diffWithParent = Diff.getDiffResultAllFiles(tuples, repoPath)
+            val diffWithParent = option(tuples, repoPath)
 
-            val resultUpdated = "commit " + head._1 + "\n     " + message + "\n" + diffWithParent + "\n\n" + result
+            val resultUpdated = Console.YELLOW + "commit " + head._1 + Console.RESET + "\n     " + message + "\n" + diffWithParent + "\n\n" + result
             loop(tail, resultUpdated)
           }
 
 
       }
     }
-
-    "On branch " + branchName + "\n\n" + loop(commits, "")
+    loop(commits, "")
   }
+
 
   def getListTuple(newFiles: Map[String, String], oldFiles: Map[String, String]): List[(String, String, String)] = {
 

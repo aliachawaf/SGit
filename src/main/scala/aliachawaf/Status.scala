@@ -128,7 +128,8 @@ object Status {
 
     if (lastCommitTree.isEmpty) List()
     else {
-      val commitTreeAsMap = CommitUtil.getCommitAsMap(repoPath, lastCommitTree.get)
+      val commitTreeContent = FileUtil.getFileContent(repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + lastCommitTree.get)
+      val commitTreeAsMap = CommitUtil.getCommitAsMap(repoPath, commitTreeContent)
       val indexAsMap = IndexUtil.getIndexAsMap(repoPath)
 
       val list = commitTreeAsMap.keys.toList diff indexAsMap.keys.toList

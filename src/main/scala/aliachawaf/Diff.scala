@@ -11,7 +11,7 @@ object Diff {
   def diff(repoPath: String): String = {
 
     val indexMap = IndexUtil.getIndexAsMap(repoPath)
-    val listNewOld = indexMap.toList.map(couple => (repoPath + File.separator + couple._1, repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + couple._2))
+    val listNewOld = indexMap.toList.map(couple => (repoPath + File.separator + couple._1, repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + couple._2, couple._1))
 
     getDiffResultAllFiles(listNewOld, repoPath)
   }
@@ -110,10 +110,10 @@ object Diff {
     loop("", linesDiff)
   }
 
-  def getDiffResultAllFiles(listNewOld: List[(String, String)], repoPath: String): String = {
+  def getDiffResultAllFiles(listNewOld: List[(String, String, String)], repoPath: String): String = {
 
     @tailrec
-    def loop(currentListNewOld: List[(String, String)], result: String): String = {
+    def loop(currentListNewOld: List[(String, String, String)], result: String): String = {
 
       currentListNewOld match {
         case Nil => result
@@ -135,7 +135,7 @@ object Diff {
 
           if (diffLines.isEmpty) loop(tail, result + "\n\n")
           else {
-            val diffResult = headCouple._1.replace(repoPath + File.separator, "") + " : \n" + getDiffResultOneFile(diffLines, newFile, oldFile) + "\n\n"
+            val diffResult = headCouple._3.replace(repoPath + File.separator, "") + " : \n" + getDiffResultOneFile(diffLines, newFile, oldFile) + "\n\n"
             loop(tail, result + diffResult)
           }
       }

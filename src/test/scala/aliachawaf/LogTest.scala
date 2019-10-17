@@ -51,6 +51,9 @@ class LogTest extends FlatSpec with BeforeAndAfterEach {
     val logResult = Log.getCommitLog(repoPath, secondCommitHash)
     val expectedLogResult = List((firstCommitHash, firstCommitContent), (secondCommitHash, secondCommitContent))
 
+    val test = Log.logP(repoPath)
+    println(test)
+
     assert(logResult == expectedLogResult)
   }
 }

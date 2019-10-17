@@ -13,12 +13,24 @@ object Log {
     val lastCommit = CommitUtil.getLastCommit(repoPath, currentBranch)
 
     if (lastCommit.isEmpty) logNotCommit()
-
     else {
       val allCommits = getCommitLog(repoPath, lastCommit.get)
-      logResult(allCommits)
+      logResult(allCommits, currentBranch)
     }
   }
+
+  def logP(repoPath: String): String = {
+
+    val currentBranch = BranchUtil.getCurrentBranch(repoPath)
+    val lastCommit = CommitUtil.getLastCommit(repoPath, currentBranch)
+
+    if (lastCommit.isEmpty) logNotCommit()
+    else {
+      val allCommits = getCommitLog(repoPath, lastCommit.get)
+      logOptionP(allCommits, currentBranch, repoPath)
+    }
+  }
+
 
   /**
    *
@@ -45,7 +57,7 @@ object Log {
     loop(lastCommit, List())
   }
 
-  def logResult(commits: List[(String, String)]): String = {
+  def logResult(commits: List[(String, String)], branchName: String): String = {
 
     @scala.annotation.tailrec
     def loop(currentCommits: List[(String, String)], result: String): String = {
@@ -58,6 +70,83 @@ object Log {
           loop(tail, resultUpdated)
       }
     }
-    loop(commits, "")
+
+    "On branch " + branchName + "\n\n" + loop(commits, "")
+  }
+
+
+  def logOptionP(commits: List[(String, String)], branchName: String, repoPath: String): String = {
+
+    @scala.annotation.tailrec
+    def loop(currentCommits: List[(String, String)], result: String): String = {
+
+      currentCommits match {
+        case Nil => result
+        case head :: tail =>
+
+          val message = CommitUtil.getCommitMessage(head._2.split("\n").toList)
+          val parent = CommitUtil.getCommitParent(head._2.split("\n").toList)
+
+          val treeHash = head._2.split("\n").toList(0).split(" ")(1)
+          val treeContent = FileUtil.getFileContent(repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + treeHash)
+          val newFiles = CommitUtil.getCommitAsMap(repoPath, treeContent)
+
+          if (parent.isDefined) {
+
+            val parentContent = FileUtil.getFileContent(repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + parent.get)
+
+            val parentTreeContent = FileUtil.getFileContent(repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + parentContent(0).split(" ")(1))
+            val oldFiles = CommitUtil.getCommitAsMap(repoPath, parentTreeContent)
+
+            val tuples =
+              getListTuple(newFiles, oldFiles)
+                .map(tuple => (repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + tuple._1, repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + tuple._2, tuple._3))
+
+            val diffWithParent = Diff.getDiffResultAllFiles(tuples, repoPath)
+
+            val resultUpdated = "commit " + head._1 + "\n     " + message + "\n" + diffWithParent + "\n\n" + result
+            loop(tail, resultUpdated)
+
+          }
+          else {
+
+            val tuples =
+              getListTuple(newFiles, Map().withDefaultValue(""))
+                .map(tuple => (repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + tuple._1, repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + tuple._2, tuple._3))
+
+            val diffWithParent = Diff.getDiffResultAllFiles(tuples, repoPath)
+
+            val resultUpdated = "commit " + head._1 + "\n     " + message + "\n" + diffWithParent + "\n\n" + result
+            loop(tail, resultUpdated)
+          }
+
+
+      }
+    }
+
+    "On branch " + branchName + "\n\n" + loop(commits, "")
+  }
+
+  def getListTuple(newFiles: Map[String, String], oldFiles: Map[String, String]): List[(String, String, String)] = {
+
+    @scala.annotation.tailrec
+    def loop(currentNewFiles: Map[String, String], list: List[(String, String, String)]): List[(String, String, String)] = {
+
+      if (currentNewFiles.isEmpty) {
+
+        val deletedFiles = oldFiles.keys.toList diff newFiles.keys.toList
+        val deletedTuple = deletedFiles.map(file => ("", oldFiles(file), file))
+
+        deletedTuple ++ list
+      }
+      else {
+        val newFile = currentNewFiles.head._2
+        val oldFile = oldFiles(currentNewFiles.head._1)
+
+        loop(currentNewFiles.tail, (newFile, oldFile, currentNewFiles.head._1) :: list)
+      }
+    }
+
+    loop(newFiles, List())
   }
 }

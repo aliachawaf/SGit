@@ -61,7 +61,7 @@ object Commit {
 
     // Keep only paths form index lines and split by path elements
     val indexPaths = indexContent.keys.toList
-    val maxDepth = indexPaths.maxBy(_.length).length
+    val maxDepth = indexPaths.maxBy(_.split(File.separator).length).length
     loop(maxDepth, Map(), indexPaths)
   }
 

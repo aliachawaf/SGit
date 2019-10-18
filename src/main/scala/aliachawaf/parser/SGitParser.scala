@@ -3,7 +3,7 @@ package aliachawaf.parser
 import java.io.File
 
 import aliachawaf.util.ResultUtil._
-import aliachawaf.{Commit, Diff, Index, Repository, Status, Tag}
+import aliachawaf.{Branch, Commit, Diff, Index, Log, Repository, Status, Tag}
 import scopt.OParser
 
 object SGitParser {
@@ -55,10 +55,32 @@ object SGitParser {
       cmd("diff")
         .action((_, c) => c.copy(mode = "diff"))
         .text("Show changes between working tree and tracked files\n"),
+
+      cmd("branch")
+        .action((_, c) => c.copy(mode = "branch"))
+        .text("Create a new branch")
+        .children(
+          arg[String]("<name>")
+            .required()
+            .maxOccurs(1)
+            .action((x, c) => c.copy(name = x))
+            .text("name of the new branch\n")
+        ),
+
+      cmd(name = "log")
+        .action((_, c) => c.copy(mode = "log"))
+        .text("Show commit logs started with newest")
+        .children(
+          opt[Unit]('p', "patch")
+            .action((_, c) => c.copy(option = "patch"))
+            .text("Show changes overtime"),
+          opt[Unit]('s', "stat")
+            .action((_, c) => c.copy(option = "stat"))
+            .text("Show stats about changes overtime\n")
+        )
     )
   }
 
-  // TODO fix prints
   def parse(currentDirectory: String, repoPath: Option[String], args: Array[String]): String = {
     OParser.parse(parser1, args, Config()) match {
       case Some(config) =>
@@ -82,8 +104,16 @@ object SGitParser {
             if (Repository.isInRepository(currentDirectory)) Tag.tag(repoPath.get, config.name)
             else notSGitRepository()
 
+          case "branch" =>
+            if (Repository.isInRepository(currentDirectory)) Branch.createNewBranch(repoPath.get, config.name)
+            else notSGitRepository()
+
           case "diff" =>
             if (Repository.isInRepository(currentDirectory)) Diff.diff(repoPath.get)
+            else notSGitRepository()
+
+          case "log" =>
+            if (Repository.isInRepository(currentDirectory)) Log.log(repoPath.get, config.option)
             else notSGitRepository()
 
           case _ => "TO DO"

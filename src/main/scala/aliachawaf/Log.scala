@@ -2,24 +2,12 @@ package aliachawaf
 
 import java.io.File
 
-import aliachawaf.util.{BranchUtil, CommitUtil, FileUtil}
+import aliachawaf.util.{BranchUtil, CommitUtil, FileUtil, ObjectUtil}
 import aliachawaf.util.ResultUtil.logNotCommit
 
 object Log {
 
-  def log(repoPath: String): String = {
-
-    val currentBranch = BranchUtil.getCurrentBranch(repoPath)
-    val lastCommit = CommitUtil.getLastCommit(repoPath, currentBranch)
-
-    if (lastCommit.isEmpty) logNotCommit()
-    else {
-      val allCommits = getCommitLog(repoPath, lastCommit.get)
-      logResult(allCommits, currentBranch)
-    }
-  }
-
-  def logOption(repoPath: String, option: String): String = {
+  def log(repoPath: String, option: String): String = {
 
     val currentBranch = BranchUtil.getCurrentBranch(repoPath)
     val lastCommit = CommitUtil.getLastCommit(repoPath, currentBranch)
@@ -29,12 +17,12 @@ object Log {
       val allCommits = getCommitLog(repoPath, lastCommit.get)
 
       option match {
+        case "" => logResult(allCommits, currentBranch)
         case "patch" => getLogOption(allCommits, repoPath, Diff.getDiffResultAllFiles)
         case "stat" => getLogOption(allCommits, repoPath, Diff.getDiffAllFilesOptionStat)
       }
     }
   }
-
 
   /**
    *
@@ -47,7 +35,7 @@ object Log {
     @scala.annotation.tailrec
     def loop(currentCommitHash: String, result: List[(String, String)]): List[(String, String)] = {
 
-      val currentCommitContent = FileUtil.getFileContent(repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + currentCommitHash)
+      val currentCommitContent = ObjectUtil.getObjectContent(repoPath, currentCommitHash)
       val resultUpdated = (currentCommitHash, currentCommitContent mkString "\n") :: result
 
       if (currentCommitContent(1).split(" ")(0) == "parent") {
@@ -78,7 +66,7 @@ object Log {
     "On branch " + branchName + "\n\n" + loop(commits, "")
   }
 
-  def getLogOption(commits: List[(String, String)], repoPath: String, option: (List[(String, String, String)], String) => String): String = {
+  def getLogOption(commits: List[(String, String)], repoPath: String, option: (List[FilesToDiff], String) => String): String = {
 
     @scala.annotation.tailrec
     def loop(currentCommits: List[(String, String)], result: String): String = {
@@ -91,19 +79,23 @@ object Log {
           val parent = CommitUtil.getCommitParent(head._2.split("\n").toList)
 
           val treeHash = head._2.split("\n").toList(0).split(" ")(1)
-          val treeContent = FileUtil.getFileContent(repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + treeHash)
+          val treeContent = ObjectUtil.getObjectContent(repoPath, treeHash)
           val newFiles = CommitUtil.getCommitAsMap(repoPath, treeContent)
 
           if (parent.isDefined) {
 
-            val parentContent = FileUtil.getFileContent(repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + parent.get)
+            val parentContent = ObjectUtil.getObjectContent(repoPath, parent.get)
 
-            val parentTreeContent = FileUtil.getFileContent(repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + parentContent(0).split(" ")(1))
+            val parentTreeContent = ObjectUtil.getObjectContent(repoPath, parentContent(0).split(" ")(1))
             val oldFiles = CommitUtil.getCommitAsMap(repoPath, parentTreeContent)
+
+            // val tuples =
+            // getListTuple(newFiles, oldFiles)
+            // .map(tuple => (repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + tuple._1, repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + tuple._2, tuple._3))
 
             val tuples =
               getListTuple(newFiles, oldFiles)
-                .map(tuple => (repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + tuple._1, repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + tuple._2, tuple._3))
+                .map(tuple => new FilesToDiff(ObjectUtil.getObjectContent(repoPath, tuple._1), ObjectUtil.getObjectContent(repoPath, tuple._2), tuple._3))
 
             val diffWithParent = option(tuples, repoPath)
 
@@ -114,7 +106,7 @@ object Log {
 
             val tuples =
               getListTuple(newFiles, Map().withDefaultValue(""))
-                .map(tuple => (repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + tuple._1, repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + tuple._2, tuple._3))
+                .map(tuple => new FilesToDiff(ObjectUtil.getObjectContent(repoPath, tuple._1), ObjectUtil.getObjectContent(repoPath, tuple._2), tuple._3))
 
             val diffWithParent = option(tuples, repoPath)
 
@@ -125,6 +117,7 @@ object Log {
 
       }
     }
+
     loop(commits, "")
   }
 

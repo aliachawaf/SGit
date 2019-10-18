@@ -2,21 +2,59 @@ package aliachawaf
 
 import java.io.File
 
-import aliachawaf.util.{CommitUtil, FileUtil, IndexUtil}
-import Console.{GREEN, RED, RESET}
+import aliachawaf.util.{CommitUtil, FileUtil, IndexUtil, ObjectUtil}
 
+import Console.{GREEN, RED, RESET}
 import scala.annotation.tailrec
+
+class FilesToDiff(val newFileContent: List[String], val oldFileContent: List[String], val filePath: String)
 
 object Diff {
 
   def diff(repoPath: String): String = {
 
+    /*_______________ I/O PART _______________*/
     val indexMap = IndexUtil.getIndexAsMap(repoPath)
-    val listNewOld = indexMap.toList.map(couple => (repoPath + File.separator + couple._1, repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + couple._2, couple._1))
+    val listNewOld = getAllFilesToDiff(repoPath, indexMap.toList)
 
+    /*_______________ PURE PART _______________*/
     getDiffResultAllFiles(listNewOld, repoPath)
+
   }
 
+  /**
+   *
+   * @param repoPath
+   * @param indexMap : index given as a Map with (path -> blobHash)
+   * @return all the files we have to do the diff on it
+   */
+  def getAllFilesToDiff(repoPath: String, indexMap: List[(String, String)]): List[FilesToDiff] = {
+
+    @tailrec
+    def loop(remainingIndexPath: List[(String, String)], accFiles: List[FilesToDiff]): List[FilesToDiff] = {
+
+      remainingIndexPath match {
+        case Nil => accFiles
+        case head :: tail => {
+
+          val newFileContent = FileUtil.getFileContent(repoPath + File.separator + head._1)
+          val oldFileContent = ObjectUtil.getObjectContent(repoPath, head._2)
+          val filePath = head._1
+          val fileToDiff = new FilesToDiff(newFileContent, oldFileContent, filePath)
+
+          loop(tail, fileToDiff :: accFiles)
+        }
+      }
+    }
+    loop(indexMap, List())
+  }
+
+  /**
+   *
+   * @param newFile : content of the new file version as (list of the lines)
+   * @param oldFile : content of the old file version as (list of the lines)
+   * @return
+   */
   def getMatrixOfComparison(newFile: List[String], oldFile: List[String]): Map[(Int, Int), Int] = {
 
     @scala.annotation.tailrec
@@ -111,18 +149,18 @@ object Diff {
     loop("", linesDiff)
   }
 
-  def getDiffResultAllFiles(listNewOld: List[(String, String, String)], repoPath: String): String = {
+  def getDiffResultAllFiles(listNewOld: List[FilesToDiff], repoPath: String): String = {
 
     @tailrec
-    def loop(currentListNewOld: List[(String, String, String)], result: String): String = {
+    def loop(currentListNewOld: List[FilesToDiff], result: String): String = {
 
       currentListNewOld match {
         case Nil => result
         case headCouple :: tail =>
 
           // Content of file in working tree
-          val newFile = FileUtil.getFileContent(headCouple._1)
-          val oldFile = FileUtil.getFileContent(headCouple._2)
+          val newFile = headCouple.newFileContent
+          val oldFile = headCouple.oldFileContent
 
           // Get diff for the file
           val matrix = getMatrixOfComparison(newFile, oldFile)
@@ -130,7 +168,7 @@ object Diff {
 
           if (diffLines.isEmpty) loop(tail, result + "\n\n")
           else {
-            val diffResult = headCouple._3.replace(repoPath + File.separator, "") + " : \n" + getDiffResultOneFile(diffLines, newFile, oldFile) + "\n\n"
+            val diffResult = headCouple.filePath.replace(repoPath + File.separator, "") + " : \n" + getDiffResultOneFile(diffLines, newFile, oldFile) + "\n\n"
             loop(tail, result + diffResult)
           }
       }
@@ -140,9 +178,9 @@ object Diff {
   }
 
 
-  def getDiffAllFilesOptionStat(listNewOld: List[(String, String, String)], repoPath: String): String = {
+  def getDiffAllFilesOptionStat(listNewOld: List[FilesToDiff], repoPath: String): String = {
     @tailrec
-    def loop(currentListNewOld: List[(String, String, String)],
+    def loop(currentListNewOld: List[FilesToDiff],
              result: String,
              accFilesModified: Int,
              accAdditions: Int,
@@ -155,13 +193,12 @@ object Diff {
         case headCouple :: tail =>
 
           // Content of file in working tree
-          val newFile = FileUtil.getFileContent(headCouple._1)
-          val oldFile = FileUtil.getFileContent(headCouple._2)
+          val newFile = headCouple.newFileContent
+          val oldFile = headCouple.oldFileContent
 
           // Get diff for the file
           val matrix = getMatrixOfComparison(newFile, oldFile)
           val diffLines = getDiffLines(matrix, newFile.length, oldFile.length)
-
 
           if (diffLines.isEmpty) loop(tail, result, accFilesModified, accAdditions, accDeletions)
 
@@ -169,15 +206,15 @@ object Diff {
 
             val accAdditionsUpdated = diffLines.count(_._1 == "++")
             val accDeletionsUpdated = diffLines.count(_._1 == "--")
-            val totalDiff = accAdditionsUpdated+accDeletionsUpdated
+            val totalDiff = accAdditionsUpdated + accDeletionsUpdated
 
             val fileStat =
               totalDiff + " : " +
-              GREEN + accAdditionsUpdated + "++ " + RESET +
-              RED + accDeletionsUpdated + "--" + RESET +
-              "\n"
+                GREEN + accAdditionsUpdated + "++ " + RESET +
+                RED + accDeletionsUpdated + "--" + RESET +
+                "\n"
 
-            val diffResult = headCouple._3.replace(repoPath + File.separator, "") + " | " + fileStat
+            val diffResult = headCouple.filePath.replace(repoPath + File.separator, "") + " | " + fileStat
             loop(tail, result + diffResult, accFilesModified + 1, accAdditionsUpdated, accDeletionsUpdated)
           }
       }

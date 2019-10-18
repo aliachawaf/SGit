@@ -1,6 +1,7 @@
 package aliachawaf.util
 
 import java.io.File
+import Console.{GREEN, RED, RESET}
 
 import aliachawaf.Status.{get_Tracked_Committed_Modified, get_Tracked_Modified_NotAdded, get_Tracked_NeverCommitted, get_Untracked}
 
@@ -18,25 +19,32 @@ object ResultUtil {
   }
 
   // TODO Add files deletions and additions
-  def commitResult(branch: String, hash: String, message: String) = "[" + branch + " " + hash.slice(0, 7) + "] " + message + "\n "
+  def commitResult(branch: String, hash: String, message: String): String = "[" + branch + " " + hash.slice(0, 7) + "] " + message + "\n "
 
   def sameCommitResult(branch: String): String = "On branch " + branch + "\nNothing to commit, working tree clean."
 
-  def statusResult(tracked_modified_notAdded: List[String], tracked_committed_modified: List[String], tracked_neverCommitted: List[String], untracked: List[String]): String = {
+  def statusResult(tracked_modified_notAdded: List[String],
+                   deleted_notAdded: List[String],
+                   tracked_committed_modified: List[String],
+                   tracked_neverCommitted: List[String],
+                   deleted_notCommitted: List[String],
+                   untracked: List[String]): String = {
 
     "Changes to be committed:\n\n" +
-      "new file: " + (tracked_modified_notAdded.mkString("\nnew file: ")) +
+      GREEN + "new file: " + (tracked_modified_notAdded.mkString("\nnew file: ")) +
       "modified: " + (tracked_committed_modified.mkString("\nmodified: ")) +
-      "\n\n" +
+      "deleted: " + (deleted_notCommitted.mkString("\ndeleted: ")) +
+      RESET + "\n\n" +
       "Changes not staged for commit:\n (use \"sgit add<file>...\" to update what will be committed)\n\n" +
-      (tracked_neverCommitted mkString "\n") +
-      "\n\n" +
+      RED + (tracked_neverCommitted mkString "\n") +
+      "deleted: " + (deleted_notAdded.mkString("\ndeleted: ")) +
+      RESET + "\n\n" +
       "Untracked files:\n (use \"sgit add <file>...\" to include in what will be committed)\n\n" +
-      (untracked mkString "\n") +
-      "\n\n"
+      RED + (untracked mkString "\n") +
+      RESET + "\n\n"
   }
 
-  def statusNoCommit(repoPath: String) = "On branch " + BranchUtil.getCurrentBranchName(repoPath) + "\n\nNo commits yet."
+  def statusNoCommit(repoPath: String): String = "On branch " + BranchUtil.getCurrentBranchName(repoPath) + "\n\nNo commits yet."
 
   /** TAG **/
   def tagResult(created: Boolean, name: String) = {
@@ -53,5 +61,7 @@ object ResultUtil {
   }
 
   def branchNoMaster() = "fatal: Not a valid object name: 'master'."
+
+  def logNotCommit() = "There is no commit yet"
 
 }

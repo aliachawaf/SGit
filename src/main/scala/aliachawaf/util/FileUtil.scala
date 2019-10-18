@@ -40,7 +40,10 @@ object FileUtil {
   }
 
   def getFileContent(filePath: String): List[String] = {
-    val source = scala.io.Source.fromFile(filePath)
-    return try source.getLines.toList finally source.close()
+    if (new File(filePath).exists() && new File(filePath).isFile) {
+      val source = scala.io.Source.fromFile(filePath)
+      return try source.getLines.toList finally source.close()
+    }
+    else List()
   }
 }

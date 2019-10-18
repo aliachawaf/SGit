@@ -74,10 +74,10 @@ object CommitUtil {
   /**
    *
    * @param repoPath : path of the sgit repository
-   * @param treeHash : hash of the commit tree we want to have as a Map
+   * @param commitTreeContent
    * @return the given commit tree as a Map(filePath, hash)
    */
-  def getCommitAsMap(repoPath: String, treeHash: String): Map[String, String] = {
+  def getCommitAsMap(repoPath: String, commitTreeContent: List[String]): Map[String, String] = {
 
     /**
      * @param contentTree : list of the lines contained in the current tree we are treating
@@ -95,14 +95,14 @@ object CommitUtil {
           if (head.split(" ")(0) == "blob") {
 
             val blobHash = head.split(" ")(1)
-            val blobName = parentPath + separator + head.split(" ")(2)
+            val blobName = parentPath + head.split(" ")(2)
+
             val newCommitMap = commitMap + (blobName -> blobHash)
             loop(tail, parentPath, newCommitMap)
-
           }
           else {
             val subTreeHash = head.split(" ")(1)
-            val subTreeName = parentPath + separator + head.split(" ")(2)
+            val subTreeName = parentPath + head.split(" ")(2)
             val contentSubTree = FileUtil.getFileContent(repoPath + separator + ".sgit" + separator + "objects" + separator + subTreeHash)
             val newCommitMap = loop(contentSubTree, parentPath + separator + subTreeName, commitMap)
 
@@ -111,17 +111,21 @@ object CommitUtil {
       }
     }
 
-    val commitTreeContent = FileUtil.getFileContent(repoPath + separator + ".sgit" + separator + "objects" + separator + treeHash)
-
-    loop(commitTreeContent, "", Map())
+    loop(commitTreeContent, "", Map().withDefaultValue(""))
   }
 
 
   def getCommitMessage(commitContent: List[String]) : String = {
 
     // If is first commit (no parent)
-    if (commitContent.length == 2) commitContent(1).split(" ")(1)
-    else commitContent(2).split(" ")(1)
+    if (commitContent.length == 2) commitContent(1).split(" ").tail mkString " "
+    else commitContent(2).split(" ").tail mkString " "
+  }
 
+  def getCommitParent(commitContent: List[String]) : Option[String] = {
+
+    // If is first commit (no parent)
+    if (commitContent.length == 2) None
+    else Some(commitContent(1).split(" ")(1))
   }
 }

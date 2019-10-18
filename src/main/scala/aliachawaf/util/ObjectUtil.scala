@@ -31,4 +31,20 @@ object ObjectUtil {
     FileUtil.createNewFile(objectPath, objectContent)
     objectHash
   }
+
+
+  def createTreeObjects(trees: List[List[String]], repoPath: String) : Unit = {
+    trees match {
+      case Nil => {}
+      case head :: tail => {
+        ObjectUtil.addSGitObject(repoPath, head mkString "\n")
+        createTreeObjects(tail, repoPath)
+      }
+    }
+  }
+
+  def getObjectContent(repoPath: String, hashObject: String) : List[String] ={
+    val objectPath = repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + hashObject
+    FileUtil.getFileContent(objectPath)
+  }
 }

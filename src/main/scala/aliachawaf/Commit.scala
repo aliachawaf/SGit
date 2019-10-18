@@ -39,17 +39,14 @@ object Commit {
    */
   def createCommitTree(repoPath: String, indexContent: Map[String, String]): Map[String, List[String]] = {
 
-
-
     @tailrec
-    def loop(currentPathDepth: Int, parentContent: Map[String, List[String]], currentIndexPaths: List[List[String]]): Map[String, List[String]] = {
+    def loop(currentPathDepth: Int, parentContent: Map[String, List[String]], currentIndexPaths: List[String]): Map[String, List[String]] = {
 
-      /** If we have treated all the directories/files present in INDEX */
       if (currentPathDepth == 0) parentContent
 
       else {
-        /** Get the paths of INDEX having the current size in a List of String and with no doublons */
-        val paths = currentIndexPaths.filter(path => path.length == currentPathDepth).map(path => path mkString File.separator).distinct
+        /** Get the paths of INDEX having the current depth (with no doublons) */
+        val paths = currentIndexPaths.filter(_.split(File.separator).length == currentPathDepth).distinct
 
         /** Create blobs and then trees of the parent */
         val parentContentWithBlobs = createObjectOfParent(repoPath, "blob", paths, indexContent, parentContent)
@@ -63,8 +60,8 @@ object Commit {
     }
 
     // Keep only paths form index lines and split by path elements
-    val indexPaths = indexContent.keys.toList.map(l => l.split(File.separator).toList)
-    val maxDepth = indexPaths.sortBy(path => path.length).reverse.head.length
+    val indexPaths = indexContent.keys.toList
+    val maxDepth = indexPaths.maxBy(_.length).length
     loop(maxDepth, Map(), indexPaths)
   }
 
@@ -200,8 +197,13 @@ object Commit {
    * @param path         : path split by elements in Array
    * @param currentDepth : depth used to treat elements in paths having it
    */
-  def removeElementsOfDepth(path: List[String], currentDepth: Int): List[String] = {
-    if (path.length == currentDepth) path.slice(0, currentDepth - 1)
+  def removeElementsOfDepth(path: String, currentDepth: Int): String = {
+
+    val pathSplit = path.split(File.separator)
+
+    if (pathSplit.length == currentDepth)
+      pathSplit.slice(0, currentDepth - 1).mkString(File.separator)
+
     else path
   }
 

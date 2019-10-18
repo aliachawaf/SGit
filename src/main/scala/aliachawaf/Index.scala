@@ -6,10 +6,14 @@ import aliachawaf.util.{FileUtil, IndexUtil, ObjectUtil, ResultUtil}
 
 object Index {
 
-  /*
-    Add a file to the stage in index file.
-    For the first add execution, we have to create INDEX file in .sgit
-     */
+  /**
+   * Add a file to the stage in index file.
+   * For the first add execution, we have to create INDEX file in .sgit
+   *
+   * @param arguments : Files to add, given as a Seq (files name or glob)
+   * @param repoPath : path of the sgit repository
+   * @return add result
+   */
   def add(arguments: Seq[String], repoPath: String): String = {
 
     val sgitPath = repoPath + File.separator + ".sgit"

@@ -9,7 +9,6 @@ import scala.annotation.tailrec
 object Commit {
 
   /**
-   *
    * @param repoPath : path of the sgit repository
    * @return
    */
@@ -17,27 +16,58 @@ object Commit {
 
     if (Repository.hasIndexFile(repoPath)) {
 
-      // Get .sgit/INDEX content
-      val indexLines = IndexUtil.getIndexContent(repoPath)
-
-      // Keep only paths form index lines and split by path elements
-      val indexPaths = indexLines.map(l => l.split(" ")(1).split(File.separator))
-
-      // Sort index content by descending length
-      val indexPathsSorted = indexPaths.sortBy(path => path.length).reverse
-
-      // Create Map index
+      /*_______________ I/O PART _______________*/
       val indexContent = IndexUtil.getIndexAsMap(repoPath)
 
-      //
-      val commitTreeHash = createCommitTree(repoPath, indexPathsSorted, indexContent, indexPathsSorted.head.length)
+      /*_______________ PURE PART _______________*/
+      val commitTree = createCommitTree(repoPath, indexContent)
+      val commitTreeHash = ObjectUtil.hash(commitTree("") mkString "\n")
 
-      // Add commit object in .sgit/objects
+      /*_______________ I/O PART _______________*/
+      ObjectUtil.createTreeObjects(commitTree.values.toList, repoPath)
       addCommitInObjects(repoPath, commitTreeHash, commitMsg)
     }
 
     else ResultUtil.nothingToCommit(repoPath)
   }
+
+
+  /**
+   * @return The hash of the Commit Tree created recursively
+   * @param repoPath     : path of the SGit repository
+   * @param indexContent : Map containing the lines of INDEX with 'paths as keys' and 'hashes as values'
+   */
+  def createCommitTree(repoPath: String, indexContent: Map[String, String]): Map[String, List[String]] = {
+
+
+
+    @tailrec
+    def loop(currentPathDepth: Int, parentContent: Map[String, List[String]], currentIndexPaths: List[List[String]]): Map[String, List[String]] = {
+
+      /** If we have treated all the directories/files present in INDEX */
+      if (currentPathDepth == 0) parentContent
+
+      else {
+        /** Get the paths of INDEX having the current size in a List of String and with no doublons */
+        val paths = currentIndexPaths.filter(path => path.length == currentPathDepth).map(path => path mkString File.separator).distinct
+
+        /** Create blobs and then trees of the parent */
+        val parentContentWithBlobs = createObjectOfParent(repoPath, "blob", paths, indexContent, parentContent)
+        val parentContentWithBlobsTrees = createObjectOfParent(repoPath, "tree", paths, indexContent, parentContentWithBlobs)
+
+        /** We do the same with the paths with a shorter depth than the current */
+        // Remove elements treated (having the current depth). In this way, they will not be treated in next recursive call
+        val pathsWithoutLastElement = currentIndexPaths.map(path => removeElementsOfDepth(path, currentPathDepth))
+        loop(currentPathDepth - 1, parentContentWithBlobsTrees, pathsWithoutLastElement)
+      }
+    }
+
+    // Keep only paths form index lines and split by path elements
+    val indexPaths = indexContent.keys.toList.map(l => l.split(File.separator).toList)
+    val maxDepth = indexPaths.sortBy(path => path.length).reverse.head.length
+    loop(maxDepth, Map(), indexPaths)
+  }
+
 
   /**
    *
@@ -85,39 +115,6 @@ object Commit {
     }
   }
 
-  /**
-   * @return The hash of the Commit Tree created recursively
-   * @param repoPath         : path of the SGit repository
-   * @param indexPaths       : List of paths present in INDEX. Each path is split by separator in an Array and sorted by descending path length
-   * @param indexContent     : Map containing the lines of INDEX with 'paths as keys' and 'hashes as values'
-   * @param currentPathDepth : current depth of paths we are working on
-   * @param parentContent    : Map with the content (empty at the beginning) of the parent directory. The content will be updated progressively
-   */
-  @tailrec
-  def createCommitTree(repoPath: String, indexPaths: List[Array[String]], indexContent: Map[String, String], currentPathDepth: Int, parentContent: Map[String, Array[String]] = Map()): String = {
-
-    /** If we have treated all the directories/files present in INDEX */
-    if (currentPathDepth == 0) {
-
-      // Create Commit Tree object in .sgit/objects
-      val commitTreeContent = parentContent("") mkString "\n"
-      ObjectUtil.addSGitObject(repoPath, commitTreeContent)
-    }
-    else {
-      /** Get the paths of INDEX having the current size in a List of String and with no doublons */
-      val paths = indexPaths.filter(path => path.length == currentPathDepth).map(path => path mkString File.separator).distinct
-
-      /** Create blobs and then trees of the parent */
-      val parentContentWithBlobs = createObjectOfParent(repoPath, "blob", paths, indexContent, parentContent)
-      val parentContentWithBlobsTrees = createObjectOfParent(repoPath, "tree", paths, indexContent, parentContentWithBlobs)
-
-
-      /** We do the same with the paths with a shorter depth than the current */
-      // Remove elements treated (having the current depth). In this way, they will not be treated in next recursive call
-      val pathsWithoutLastElement = indexPaths.map(path => removeElementsOfDepth(path, currentPathDepth))
-      createCommitTree(repoPath, pathsWithoutLastElement, indexContent, currentPathDepth - 1, parentContentWithBlobsTrees)
-    }
-  }
 
   /**
    * Create objects and update the parent with those objects
@@ -129,7 +126,7 @@ object Commit {
    * @param parentContent : Map with the content of the parent directory. This content will be updated with the objects created
    * @return the content of the parent updated with the objects created from objectPaths
    */
-  def createObjectOfParent(repoPath: String, objectType: String, objectPaths: List[String], indexContent: Map[String, String], parentContent: Map[String, Array[String]]): Map[String, Array[String]] = {
+  def createObjectOfParent(repoPath: String, objectType: String, objectPaths: List[String], indexContent: Map[String, String], parentContent: Map[String, List[String]]): Map[String, List[String]] = {
 
     objectType match {
       case "blob" => {
@@ -155,7 +152,7 @@ object Commit {
 
         // Create the Trees objects in .sgit/objects
         val treesContent = folders.map(treePath => parentWithTrees(treePath) mkString "\n")
-        treesContent.foreach(content => ObjectUtil.addSGitObject(repoPath, content))
+        //treesContent.foreach(content => ObjectUtil.addSGitObject(repoPath, content))
         parentWithTrees
       }
     }
@@ -169,7 +166,7 @@ object Commit {
    * @return the parent content updated
    */
   @tailrec
-  def updateParentContent(parentContent: Map[String, Array[String]], parentPathsOfNewContent: List[String], newContentLines: List[String]): Map[String, Array[String]] = {
+  def updateParentContent(parentContent: Map[String, List[String]], parentPathsOfNewContent: List[String], newContentLines: List[String]): Map[String, List[String]] = {
     parentPathsOfNewContent match {
       case Nil => parentContent
       case path :: tail => {
@@ -186,14 +183,14 @@ object Commit {
    * @param newContent             : the new content we want to add
    * @return Add the newContent in the parentContent
    */
-  def updateParentWithOneContent(parentContent: Map[String, Array[String]], pathParentOfNewContent: String, newContent: String): Map[String, Array[String]] = {
+  def updateParentWithOneContent(parentContent: Map[String, List[String]], pathParentOfNewContent: String, newContent: String): Map[String, List[String]] = {
 
     if (parentContent.contains(pathParentOfNewContent)) {
       val currentContentForPath = parentContent(pathParentOfNewContent)
-      val updatedContentForPath = currentContentForPath.patch(0, Array(newContent), 0)
+      val updatedContentForPath = currentContentForPath.patch(0, List(newContent), 0)
       parentContent + (pathParentOfNewContent -> updatedContentForPath)
     } else {
-      parentContent + (pathParentOfNewContent -> Array(newContent))
+      parentContent + (pathParentOfNewContent -> List(newContent))
     }
   }
 
@@ -203,8 +200,10 @@ object Commit {
    * @param path         : path split by elements in Array
    * @param currentDepth : depth used to treat elements in paths having it
    */
-  def removeElementsOfDepth(path: Array[String], currentDepth: Int): Array[String] = {
+  def removeElementsOfDepth(path: List[String], currentDepth: Int): List[String] = {
     if (path.length == currentDepth) path.slice(0, currentDepth - 1)
     else path
   }
+
+
 }

@@ -77,7 +77,7 @@ object CommitUtil {
    * @param commitTreeContent
    * @return the given commit tree as a Map(filePath, hash)
    */
-  def getCommitAsMap(repoPath: String, commitTreeContent: List[String]): Map[String, String] = {
+  def getCommitAsMap(repoPath: String, commitTreeContent: List[String]): Map[String, List[String]] = {
 
     /**
      * @param contentTree : list of the lines contained in the current tree we are treating
@@ -85,7 +85,7 @@ object CommitUtil {
      * @param commitMap   : the final map updated progressively with the blobs of the tree
      * @return
      */
-    def loop(contentTree: List[String], parentPath: String, commitMap: Map[String, String]): Map[String, String] = {
+    def loop(contentTree: List[String], parentPath: String, commitMap: Map[String, List[String]]): Map[String, List[String]] = {
 
       contentTree match {
         case Nil => commitMap
@@ -95,9 +95,11 @@ object CommitUtil {
           if (head.split(" ")(0) == "blob") {
 
             val blobHash = head.split(" ")(1)
+            val blobContent = ObjectUtil.getObjectContent(repoPath, blobHash)
+
             val blobName = parentPath + head.split(" ")(2)
 
-            val newCommitMap = commitMap + (blobName -> blobHash)
+            val newCommitMap = commitMap + (blobName -> blobContent)
             loop(tail, parentPath, newCommitMap)
           }
           else {
@@ -111,7 +113,7 @@ object CommitUtil {
       }
     }
 
-    loop(commitTreeContent, "", Map().withDefaultValue(""))
+    loop(commitTreeContent, "", Map().withDefaultValue(List()))
   }
 
 

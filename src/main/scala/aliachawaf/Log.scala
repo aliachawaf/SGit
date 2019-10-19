@@ -5,6 +5,11 @@ import java.io.File
 import aliachawaf.util.{BranchUtil, CommitUtil, FileUtil, ObjectUtil}
 import aliachawaf.util.ResultUtil.logNotCommit
 
+import Console.{RESET, YELLOW}
+import scala.annotation.tailrec
+
+class CommitToDiff(val filesToDiff: List[FilesToDiff])
+
 object Log {
 
   def log(repoPath: String, option: String): String = {
@@ -15,11 +20,12 @@ object Log {
     if (lastCommit.isEmpty) logNotCommit()
     else {
       val allCommits = getCommitLog(repoPath, lastCommit.get)
+      val allCommitsToDiff = getFilesToDiff_ForAllCommits(allCommits, repoPath)
 
       option match {
-        case "" => logResult(allCommits, currentBranch)
-        case "patch" => getLogOption(allCommits, repoPath, Diff.getDiffResultAllFiles)
-        case "stat" => getLogOption(allCommits, repoPath, Diff.getDiffAllFilesOptionStat)
+        case "" => logResult(allCommitsToDiff, None, repoPath)
+        case "patch" => logResult(allCommitsToDiff, Some(Diff.getDiffResultAllFiles), repoPath)
+        case "stat" => logResult(allCommitsToDiff, Some(Diff.getDiffAllFilesOptionStat), repoPath)
       }
     }
   }
@@ -49,33 +55,76 @@ object Log {
     loop(lastCommit, List())
   }
 
-  def logResult(commits: List[(String, String)], branchName: String): String = {
+  def logResult(commits: List[CommitToDiff], option: Option[(List[FilesToDiff], String) => String], repoPath: String): String = {
+
+    @tailrec
+    def loop(remainingCommits: List[CommitToDiff], result: String): String = {
+
+      remainingCommits match {
+
+        case Nil => result
+
+        case commitToDiff :: tail =>
+
+          if (option.isEmpty) {
+            val resultUpdated = YELLOW + "commit " + "TO DO GET SHA" + RESET + "\n     " + "TO DO GET MSG" + "\n\n" + result
+            loop(tail, resultUpdated)
+          }
+          else {
+            val diffWithParent = option.get(commitToDiff.filesToDiff, repoPath)
+            val resultUpdated = YELLOW + "commit " + "TO DO GET SHA" + RESET + "\n     " + "TO DO GET MSG" + "\n" + diffWithParent + "\n\n" + result
+            loop(tail, resultUpdated)
+          }
+      }
+    }
+    loop(commits, "")
+  }
+
+
+  /**
+   *
+   * @param newFiles : list of the new version of files, given as Map of (path -> hash)
+   * @param oldFiles : list of the old version of files, given as Map of (path -> hash)
+   * @param repoPath : path of the sgit repo
+   * @return the list of files we want to diff
+   */
+  def getFilesToDiff_ForOneCommit(newFiles: Map[String, List[String]], oldFiles: Map[String, List[String]], repoPath: String): List[FilesToDiff] = {
 
     @scala.annotation.tailrec
-    def loop(currentCommits: List[(String, String)], result: String): String = {
+    def loop(currentNewFiles: Map[String, List[String]], list: List[FilesToDiff]): List[FilesToDiff] = {
 
-      currentCommits match {
-        case Nil => result
-        case head :: tail =>
-          val message = CommitUtil.getCommitMessage(head._2.split("\n").toList)
-          val resultUpdated = "commit " + head._1 + "\n     " + message + "\n\n" + result
-          loop(tail, resultUpdated)
+      if (currentNewFiles.isEmpty) {
+
+        val deletedFiles = oldFiles.keys.toList diff newFiles.keys.toList
+        val deletedTuple = deletedFiles.map(file => new FilesToDiff(List(), oldFiles(file), file))
+
+        deletedTuple ++ list
+      }
+      else {
+        val newFileContent = currentNewFiles.head._2
+        val oldFileContent = oldFiles(currentNewFiles.head._1)
+
+        val fileToDiff = new FilesToDiff(newFileContent, oldFileContent, currentNewFiles.head._1)
+
+        loop(currentNewFiles.tail, fileToDiff :: list)
       }
     }
 
-    "On branch " + branchName + "\n\n" + loop(commits, "")
+    loop(newFiles, List())
   }
 
-  def getLogOption(commits: List[(String, String)], repoPath: String, option: (List[FilesToDiff], String) => String): String = {
+
+  def getFilesToDiff_ForAllCommits(commits: List[(String, String)], repoPath: String): List[CommitToDiff] = {
 
     @scala.annotation.tailrec
-    def loop(currentCommits: List[(String, String)], result: String): String = {
+    def loop(currentCommits: List[(String, String)], result: List[CommitToDiff]): List[CommitToDiff] = {
 
       currentCommits match {
         case Nil => result
+
         case head :: tail =>
 
-          val message = CommitUtil.getCommitMessage(head._2.split("\n").toList)
+          //val message = CommitUtil.getCommitMessage(head._2.split("\n").toList)
           val parent = CommitUtil.getCommitParent(head._2.split("\n").toList)
 
           val treeHash = head._2.split("\n").toList(0).split(" ")(1)
@@ -89,28 +138,20 @@ object Log {
             val parentTreeContent = ObjectUtil.getObjectContent(repoPath, parentContent(0).split(" ")(1))
             val oldFiles = CommitUtil.getCommitAsMap(repoPath, parentTreeContent)
 
-            // val tuples =
-            // getListTuple(newFiles, oldFiles)
-            // .map(tuple => (repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + tuple._1, repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + tuple._2, tuple._3))
+            val filesToDiff = getFilesToDiff_ForOneCommit(newFiles, oldFiles, repoPath)
+            //val diffWithParent = option(filesToDiff, repoPath)
 
-            val tuples =
-              getListTuple(newFiles, oldFiles)
-                .map(tuple => new FilesToDiff(ObjectUtil.getObjectContent(repoPath, tuple._1), ObjectUtil.getObjectContent(repoPath, tuple._2), tuple._3))
-
-            val diffWithParent = option(tuples, repoPath)
-
-            val resultUpdated = Console.YELLOW + "commit " + head._1 + Console.RESET + "\n     " + message + "\n" + diffWithParent + "\n\n" + result
+            //val resultUpdated = Console.YELLOW + "commit " + head._1 + Console.RESET + "\n     " + message + "\n" + diffWithParent + "\n\n" + result
+            val resultUpdated = new CommitToDiff(filesToDiff) :: result
             loop(tail, resultUpdated)
           }
           else {
 
-            val tuples =
-              getListTuple(newFiles, Map().withDefaultValue(""))
-                .map(tuple => new FilesToDiff(ObjectUtil.getObjectContent(repoPath, tuple._1), ObjectUtil.getObjectContent(repoPath, tuple._2), tuple._3))
+            val filesToDiff = getFilesToDiff_ForOneCommit(newFiles, Map().withDefaultValue(List()), repoPath)
+            // val diffWithParent = option(filesToDiff, repoPath)
 
-            val diffWithParent = option(tuples, repoPath)
-
-            val resultUpdated = Console.YELLOW + "commit " + head._1 + Console.RESET + "\n     " + message + "\n" + diffWithParent + "\n\n" + result
+            //val resultUpdated = Console.YELLOW + "commit " + head._1 + Console.RESET + "\n     " + message + "\n" + diffWithParent + "\n\n" + result
+            val resultUpdated = new CommitToDiff(filesToDiff) :: result
             loop(tail, resultUpdated)
           }
 
@@ -118,30 +159,6 @@ object Log {
       }
     }
 
-    loop(commits, "")
-  }
-
-
-  def getListTuple(newFiles: Map[String, String], oldFiles: Map[String, String]): List[(String, String, String)] = {
-
-    @scala.annotation.tailrec
-    def loop(currentNewFiles: Map[String, String], list: List[(String, String, String)]): List[(String, String, String)] = {
-
-      if (currentNewFiles.isEmpty) {
-
-        val deletedFiles = oldFiles.keys.toList diff newFiles.keys.toList
-        val deletedTuple = deletedFiles.map(file => ("", oldFiles(file), file))
-
-        deletedTuple ++ list
-      }
-      else {
-        val newFile = currentNewFiles.head._2
-        val oldFile = oldFiles(currentNewFiles.head._1)
-
-        loop(currentNewFiles.tail, (newFile, oldFile, currentNewFiles.head._1) :: list)
-      }
-    }
-
-    loop(newFiles, List())
+    loop(commits, List())
   }
 }

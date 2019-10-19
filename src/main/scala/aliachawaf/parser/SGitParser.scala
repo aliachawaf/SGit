@@ -118,7 +118,6 @@ object SGitParser {
 
           case _ => "TO DO"
         }
-      case _ => "TO DO"
       // arguments are bad, error message will have been displayed
     }
   }

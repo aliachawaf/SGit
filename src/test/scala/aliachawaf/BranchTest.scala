@@ -80,6 +80,22 @@ class BranchTest extends FlatSpec with BeforeAndAfterEach {
     assert(branchResult == "fatal: branch named 'newBranch' already exists")
   }
 
+  it should "get all the branches and tags" in {
+
+    val currentDir = System.getProperty("user.dir")
+    val repoPath = Repository.getRepoPath(currentDir).get
+
+    Commit.commit(repoPath, "commit1")
+    Branch.createNewBranch(repoPath, "branch1")
+
+    Index.add(Seq("testDir/testFile2"), repoPath)
+    Commit.commit(repoPath, "commit2")
+    Branch.createNewBranch(repoPath, "branch2")
+
+    Tag.tag(repoPath, "tag1")
+    println(Branch.branchAV(repoPath))
+  }
+
 
 
 

@@ -34,50 +34,13 @@ object CommitUtil {
     else None
   }
 
-  /**
-   *
-   * @param repoPath : path of the sgit repository
-   * @param filePath : path of the file we want to check if is committed
-   * @param treeHash : the commit tree at the beginning, and then subtrees
-   * @return the hash of the file already committed before, else if the file was never committed returns None
-   */
-  @scala.annotation.tailrec
-  def getBlobHashCommitted(repoPath: String, filePath: List[String], treeHash: String): Option[String] = {
-
-    val treePath = repoPath + separator + ".sgit" + separator + "objects" + separator + treeHash
-    val treeContent = FileUtil.getFileContent(treePath)
-
-    // If we are at the end of the path, then it is the file name
-    if (filePath.length == 1) {
-
-      // Keep only blobs of the tree to check if the file is contained by the tree
-      val allBlobs = treeContent.filter(_.split(" ")(0) == "blob")
-      val blobCorresponding = allBlobs.filter(_.split(" ")(2) == filePath.head)
-
-      if (blobCorresponding.isEmpty) None
-      else Some(blobCorresponding.head.split(" ")(1))
-
-    }
-    else {
-      // Keep only trees of the tree to check if the current folder is contained
-      val allTrees = treeContent.filter(_.split(" ")(0) == "tree")
-      val treeCorresponding = allTrees.filter(_.split(" ")(2) == filePath.head)
-
-      if (treeCorresponding.isEmpty) None
-      else {
-        getBlobHashCommitted(repoPath, filePath.tail, treeCorresponding.head.split(" ")(1))
-      }
-    }
-  }
-
 
   /**
    *
    * @param repoPath : path of the sgit repository
-   * @param commitTreeContent
    * @return the given commit tree as a Map(filePath, hash)
    */
-  def getCommitAsMap(repoPath: String, commitTreeContent: List[String]): Map[String, List[String]] = {
+  def getCommitAsMap(repoPath: String, treeHash: Option[String]): Option[Map[String, List[String]]] = {
 
     /**
      * @param contentTree : list of the lines contained in the current tree we are treating
@@ -113,12 +76,14 @@ object CommitUtil {
       }
     }
 
-    loop(commitTreeContent, "", Map().withDefaultValue(List()))
+    if (treeHash.isEmpty) None
+    else Some(loop(ObjectUtil.getObjectContent(repoPath, treeHash.get), "", Map().withDefaultValue(List())))
   }
 
 
   def getCommitMessage(commitContent: List[String]) : String = {
 
+    println(commitContent)
     // If is first commit (no parent)
     if (commitContent.length == 2) commitContent(1).split(" ").tail mkString " "
     else commitContent(2).split(" ").tail mkString " "

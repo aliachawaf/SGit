@@ -39,9 +39,11 @@ object SGitParser {
             .action((x, c) => c.copy(arguments = x))
             .text("message describing the commit\n")
         ),
+
       cmd("status")
         .action((_, c) => c.copy(mode = "status"))
         .text("Show the working tree status\n"),
+
       cmd("tag")
         .action((_, c) => c.copy(mode = "tag"))
         .text("Create a tag object referencing on the last commit\n")
@@ -69,14 +71,14 @@ object SGitParser {
 
       cmd(name = "log")
         .action((_, c) => c.copy(mode = "log"))
-        .text("Show commit logs started with newest")
+        .text("Show commit logs starting with the newest one")
         .children(
           opt[Unit]('p', "patch")
             .action((_, c) => c.copy(option = "patch"))
-            .text("Show changes overtime"),
+            .text("show changes overtime"),
           opt[Unit]('s', "stat")
             .action((_, c) => c.copy(option = "stat"))
-            .text("Show stats about changes overtime\n")
+            .text("show stats about changes overtime\n")
         )
     )
   }

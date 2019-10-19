@@ -23,13 +23,15 @@ object ResultUtil {
 
   def sameCommitResult(branch: String): String = "On branch " + branch + "\nNothing to commit, working tree clean."
 
-  def statusResult(tracked_modified_notAdded: List[String],
+  def statusResult(branch: String,
+                   tracked_modified_notAdded: List[String],
                    deleted_notAdded: List[String],
                    tracked_committed_modified: List[String],
                    tracked_neverCommitted: List[String],
                    deleted_notCommitted: List[String],
                    untracked: List[String]): String = {
 
+    "On branch " + branch + ".\n\n" +
     "Changes to be committed:\n\n" +
       GREEN + "new file: " + (tracked_modified_notAdded.mkString("\nnew file: ")) +
       "modified: " + (tracked_committed_modified.mkString("\nmodified: ")) +
@@ -61,6 +63,15 @@ object ResultUtil {
   }
 
   def branchNoMaster() = "fatal: Not a valid object name: 'master'."
+
+  def branchAVResult(branches: List[BranchTag], tags: List[BranchTag], currentBranch: String) : String = {
+
+    val current = branches.filter(_.name == currentBranch).head
+    val resultCurrentBranch = "branches : \n" + Console.GREEN + current.name + " " + current.hash.slice(0,7) + " " + current.commitMessage + Console.RESET + "\n"
+    val resultBranches = resultCurrentBranch + branches.filter(_.name != currentBranch).map(b => b.toString).mkString("\n")
+
+    resultBranches + "\n\ntags : \n" + tags.map(t => t.toString).mkString("\n")
+  }
 
   def logNotCommit() = "There is no commit yet"
 

@@ -2,6 +2,13 @@ package aliachawaf.util
 
 import java.io.File
 
+
+class BranchTag(val name: String, val hash: String, val commitMessage: String) {
+  override def toString: String = {
+    name + " " + hash.slice(0,7) + " " + commitMessage
+  }
+}
+
 object BranchUtil {
 
   def getCurrentBranch(repoPath: String): String = {
@@ -12,32 +19,17 @@ object BranchUtil {
     getCurrentBranch(repoPath).split(File.separator).last
   }
 
-  /**
-   *
-   * @param repoPath
-   * @return List of branches with the format (branchName, commitHash, commitMessage)
-   */
-  def getAllBranches(repoPath: String) : List[(String, String, String)] = {
 
-    val branchPath = repoPath + File.separator + ".sgit" + File.separator + "branches"
+  def getAllBranchesOrTags(typeObject: String, repoPath: String) : List[BranchTag] = {
 
-    @scala.annotation.tailrec
-    def loop(listBranches: List[File], accBranchList: List[(String, String, String)]) : List[(String, String, String)] = {
+    val objectPath = repoPath + File.separator + ".sgit" + File.separator + typeObject
+    val objects = new File(objectPath).listFiles().toList
 
-      listBranches match {
-        case Nil => accBranchList
-        case head :: tail => {
-
-          val branchCommit = FileUtil.getFileContent(branchPath + File.separator + head.getName)(0)
-          val commitContent = FileUtil.getFileContent(repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + branchCommit)
-          val commitMsg = CommitUtil.getCommitMessage(commitContent)
-
-          loop(tail, (head.getName, branchCommit, commitMsg) :: accBranchList)
-        }
-      }
-    }
-    val branches = new File(branchPath).listFiles().toList
-    loop(branches, List())
+    objects.map(o => new BranchTag(
+      o.getName,
+      FileUtil.getFileContent(o.getAbsolutePath).head,
+      CommitUtil.getCommitMessage(ObjectUtil.getObjectContent(repoPath, FileUtil.getFileContent(o.getAbsolutePath) mkString ""))
+      ))
   }
 
 }

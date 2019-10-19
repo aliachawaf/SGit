@@ -3,8 +3,9 @@ package aliachawaf
 import java.io.File
 import java.io.File.separator
 
-import aliachawaf.util.{BranchUtil, CommitUtil, FileUtil}
+import aliachawaf.util.{BranchTag, BranchUtil, CommitUtil, FileUtil, ResultUtil}
 import aliachawaf.util.ResultUtil.{branchNoMaster, branchResult}
+
 
 object Branch {
 
@@ -33,9 +34,13 @@ object Branch {
     else branchNoMaster()
   }
 
-  def getBranchesTags(repoPath: String) = {
 
+  def branchAV(repoPath: String) : String = {
 
+    val branches = BranchUtil.getAllBranchesOrTags("branches", repoPath)
+    val tags = BranchUtil.getAllBranchesOrTags("tags", repoPath)
+    val currentBranch = BranchUtil.getCurrentBranchName(repoPath)
 
+    ResultUtil.branchAVResult(branches, tags, currentBranch)
   }
 }

@@ -3,6 +3,7 @@ package aliachawaf
 import java.io.File
 import java.nio.file.Paths
 
+import aliachawaf.Status.toRelativePaths
 import aliachawaf.util.{BranchUtil, CommitUtil, FileUtil, IndexUtil, ObjectUtil, ResultUtil}
 import aliachawaf.util.IndexUtil._
 
@@ -12,75 +13,90 @@ object Status {
 
   def status(currentDir: String): String = {
 
-    val repoPath = Repository.getRepoPath(currentDir).get
-    val branch = BranchUtil.getCurrentBranch(repoPath)
+    /*___________________  I/O PART : READING  ____________________*/
 
-    if (CommitUtil.getLastCommit(repoPath, branch).isDefined) {
+    val repoPath = Repository.getRepoPath(currentDir).get
+    val branch = BranchUtil.getCurrentBranchName(repoPath)
+
+    val allRepoFiles = getAllRepoFiles(repoPath)
+    val indexMap = IndexUtil.getIndexAsMap(repoPath)
+
+    val lastCommitTree = CommitUtil.getLastCommitTree(repoPath)
+    val commitTree = CommitUtil.getCommitAsMap(repoPath, lastCommitTree)
+
+
+    /*___________________  PURE FUNCTIONAL PART ___________________*/
+
+    if (lastCommitTree.isEmpty) ResultUtil.statusNoCommit(repoPath)
+
+    else {
       ResultUtil.statusResult(
-        get_Tracked_Modified_NotAdded(currentDir, repoPath),
-        get_Deleted_NotAdded(currentDir, repoPath),
-        get_Tracked_Committed_Modified(currentDir, repoPath),
-        get_Deleted_NotCommitted(currentDir, repoPath),
-        get_Tracked_NeverCommitted(currentDir, repoPath),
-        get_Untracked(currentDir, repoPath)
+        branch,
+        get_Tracked_Modified_NotAdded(allRepoFiles, indexMap, currentDir, repoPath),
+        get_Deleted_NotAdded(allRepoFiles, indexMap, currentDir, repoPath),
+        get_Tracked_Committed_Modified(commitTree, indexMap, currentDir, repoPath),
+        get_Deleted_NotCommitted(commitTree, indexMap, currentDir, repoPath),
+        get_Tracked_NeverCommitted(commitTree, indexMap, currentDir, repoPath),
+        get_Untracked(allRepoFiles, indexMap, currentDir, repoPath)
       )
     }
-    else ResultUtil.statusNoCommit(repoPath)
   }
 
-  /**
-   * @return the list (paths) of the untracked files (not added yet in .sgit/INDEX)
-   */
-  def get_Untracked(currentDir: String, repoPath: String): List[String] = {
+  def getAllRepoFiles(repoPath: String): Map[String, List[String]] = {
 
-    val allRepoFiles =
+    val allRepoFilesPaths =
       FileUtil.recursiveListFiles(new File(repoPath))
         .filter(_.isFile)
         .filter(!_.getAbsolutePath.contains(".sgit"))
         .map(_.getAbsolutePath.replace(repoPath + File.separator, ""))
         .toList
 
-    val indexContent = getIndexContent(repoPath) mkString "\n"
+    val allRepoFilesContent = allRepoFilesPaths.map(path => FileUtil.getFileContent(repoPath + File.separator + path))
 
-    val untracked = allRepoFiles.filter(!indexContent.contains(_))
+    (allRepoFilesPaths zip allRepoFilesContent).toMap
+  }
+
+  /**
+   * @return the list (paths) of the untracked files (not added yet in .sgit/INDEX)
+   */
+  def get_Untracked(allRepoFiles: Map[String, List[String]], indexMap: Map[String, String], currentDir: String, repoPath: String): List[String] = {
+
+    val indexPaths = indexMap.keys.toList
+    val filesPaths = allRepoFiles.keys.toList
+
+    val untracked = filesPaths.filter(!indexPaths.contains(_))
     toRelativePaths(untracked, currentDir, repoPath)
   }
 
   /**
    * @return the list (paths) of the tracked and modified files (modified after been added in .sgit/INDEX)
    */
-  def get_Tracked_Modified_NotAdded(currentDir: String, repoPath: String): List[String] = {
-    val indexLines = getIndexContent(repoPath)
-    val index = indexLines mkString "\n"
+  def get_Tracked_Modified_NotAdded(allRepoFiles: Map[String, List[String]], indexMap: Map[String, String], currentDir: String, repoPath: String): List[String] = {
 
-    val tracked = getIndexPaths(repoPath)
-    val newHashTracked = tracked.map(path => ObjectUtil.hash(FileUtil.getFileContent(repoPath + File.separator + path) mkString "\n"))
-    val mapNewHash = (tracked zip newHashTracked).toMap
+    val tracked = indexMap.keys.toList
+    val newHashTracked = tracked.map(allRepoFiles(_))
+    val lastVersionMap = (tracked zip newHashTracked).toMap
 
-    val mapOldHash = getIndexAsMap(repoPath)
-
-    val trackedModifedFiles =
-      mapNewHash
-        .filter(path => mapOldHash(path._1) != path._2)
-        .keys
-        .toList
-
-    toRelativePaths(trackedModifedFiles, currentDir, repoPath)
+    val trackedModifiedFiles = lastVersionMap.filter(path => indexMap(path._1) != ObjectUtil.hash(path._2 mkString "\n"))
+    toRelativePaths(trackedModifiedFiles.keys.toList, currentDir, repoPath)
   }
 
 
   /**
    * @return the list (paths) of the tracked but never committed before
    */
-  def get_Tracked_NeverCommitted(currentDir: String, repoPath: String): List[String] = {
+  //def get_Tracked_NeverCommitted(lastCommitTree: Option[String], allRepoFiles: Map[String, List[String]], indexMap: Map[String, String], currentDir: String, repoPath: String): List[String] = {
+  def get_Tracked_NeverCommitted(commitTree: Option[Map[String, List[String]]], indexMap: Map[String, String], currentDir: String, repoPath: String): List[String] = {
 
-    val indexPaths = getIndexPaths(repoPath)
-    val lastCommitTree = CommitUtil.getLastCommitTree(repoPath)
-
-    if (lastCommitTree.isEmpty) toRelativePaths(indexPaths, currentDir, repoPath)
+    println("YES")
+    if (commitTree.isEmpty) indexMap.keys.toList
     else {
-      val list = indexPaths.filter(path => CommitUtil.getBlobHashCommitted(repoPath, path.split(File.separator).toList, lastCommitTree.get).isEmpty)
-      toRelativePaths(list, currentDir, repoPath)
+      println("YES2")
+      val paths_Tracked_NotCommitted = indexMap.keys.toList diff commitTree.get.keys.toList
+      println(paths_Tracked_NotCommitted)
+      val test = toRelativePaths(paths_Tracked_NotCommitted, currentDir, repoPath)
+      println(test)
+      test
     }
   }
 
@@ -88,53 +104,42 @@ object Status {
    * @return the list (paths) of the tracked committed and modified files
    *         (ie files added, but different from the last commit)
    */
-  def get_Tracked_Committed_Modified(currentDir: String, repoPath: String): List[String] = {
+  def get_Tracked_Committed_Modified(commitTree: Option[Map[String, List[String]]], indexMap: Map[String, String], currentDir: String, repoPath: String): List[String] = {
 
-    val lastCommitTree = CommitUtil.getLastCommitTree(repoPath)
-
-    if (lastCommitTree.isEmpty) List()
+    if (commitTree.isEmpty) List()
     else {
-
       // get hash of files already committed before
-      val indexPaths = getIndexPaths(repoPath)
-      val commitHashes = indexPaths.map(path => CommitUtil.getBlobHashCommitted(repoPath, path.split(File.separator).toList, lastCommitTree.get).getOrElse("never committed"))
-
-      val commitMapAllFiles = (indexPaths zip commitHashes).toMap
-      val commitMap = commitMapAllFiles.filter(_._2 != "never committed")
+      val commitMap = (indexMap.keys.toList zip commitTree.get.values.toList).toMap
 
       // keep from the files already committed those were modified after (hash in index is different in commit)
-      val indexMap = getIndexAsMap(repoPath)
-      val list = commitMap.filter(element => indexMap(element._1) != element._2).keys.toList
+      val list = commitMap.filter(element => indexMap(element._1) != ObjectUtil.hash(element._2 mkString "\n")).keys.toList
       toRelativePaths(list, currentDir, repoPath)
     }
   }
+
 
   /**
    *
    * @return the files (relative paths) tracked but not present in working tree
    *         ( ie removed from sgit repository, but still in index)
    */
-  def get_Deleted_NotAdded(currentDir: String, repoPath: String): List[String] = {
-    val indexPathsNotFound = getIndexPaths(repoPath).filter(!new File(_).exists())
+  def get_Deleted_NotAdded(allRepoFiles: Map[String, List[String]], indexContent: Map[String, String], currentDir: String, repoPath: String): List[String] = {
+    val indexPathsNotFound =  indexContent.keys.toList diff allRepoFiles.keys.toList
     toRelativePaths(indexPathsNotFound, currentDir, repoPath)
   }
+
 
   /**
    *
    * @return the files deleted (removed from index) but still in commit tree
    */
-  def get_Deleted_NotCommitted(currentDir: String, repoPath: String): List[String] = {
+  def get_Deleted_NotCommitted(commitTree: Option[Map[String, List[String]]], indexContent: Map[String, String], currentDir: String, repoPath: String): List[String] = {
 
-    val branch = BranchUtil.getCurrentBranchName(repoPath)
-    val lastCommitTree = CommitUtil.getLastCommit(repoPath, branch)
-
-    if (lastCommitTree.isEmpty) List()
+    println("YES")
+    if (commitTree.isEmpty) List()
     else {
-      val commitTreeContent = FileUtil.getFileContent(repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + lastCommitTree.get)
-      val commitTreeAsMap = CommitUtil.getCommitAsMap(repoPath, commitTreeContent)
-      val indexAsMap = IndexUtil.getIndexAsMap(repoPath)
-
-      val list = commitTreeAsMap.keys.toList diff indexAsMap.keys.toList
+      val list = commitTree.get.keys.toList diff indexContent.keys.toList
+      println("LSIT " + list)
       toRelativePaths(list, currentDir, repoPath)
     }
   }

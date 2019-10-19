@@ -124,33 +124,28 @@ object Log {
 
         case head :: tail =>
 
-          //val message = CommitUtil.getCommitMessage(head._2.split("\n").toList)
           val parent = CommitUtil.getCommitParent(head._2.split("\n").toList)
 
           val treeHash = head._2.split("\n").toList(0).split(" ")(1)
-          val treeContent = ObjectUtil.getObjectContent(repoPath, treeHash)
-          val newFiles = CommitUtil.getCommitAsMap(repoPath, treeContent)
+          val newFiles = CommitUtil.getCommitAsMap(repoPath, Some(treeHash))
 
           if (parent.isDefined) {
 
             val parentContent = ObjectUtil.getObjectContent(repoPath, parent.get)
 
             val parentTreeContent = ObjectUtil.getObjectContent(repoPath, parentContent(0).split(" ")(1))
-            val oldFiles = CommitUtil.getCommitAsMap(repoPath, parentTreeContent)
+            val parentHash = ObjectUtil.hash(parentTreeContent mkString "\n")
+            val oldFiles = CommitUtil.getCommitAsMap(repoPath, Some(parentHash))
 
-            val filesToDiff = getFilesToDiff_ForOneCommit(newFiles, oldFiles, repoPath)
-            //val diffWithParent = option(filesToDiff, repoPath)
+            val filesToDiff = getFilesToDiff_ForOneCommit(newFiles.get, oldFiles.get, repoPath)
 
-            //val resultUpdated = Console.YELLOW + "commit " + head._1 + Console.RESET + "\n     " + message + "\n" + diffWithParent + "\n\n" + result
             val resultUpdated = new CommitToDiff(filesToDiff) :: result
             loop(tail, resultUpdated)
           }
           else {
 
-            val filesToDiff = getFilesToDiff_ForOneCommit(newFiles, Map().withDefaultValue(List()), repoPath)
-            // val diffWithParent = option(filesToDiff, repoPath)
+            val filesToDiff = getFilesToDiff_ForOneCommit(newFiles.get, Map().withDefaultValue(List()), repoPath)
 
-            //val resultUpdated = Console.YELLOW + "commit " + head._1 + Console.RESET + "\n     " + message + "\n" + diffWithParent + "\n\n" + result
             val resultUpdated = new CommitToDiff(filesToDiff) :: result
             loop(tail, resultUpdated)
           }

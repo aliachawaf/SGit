@@ -14,7 +14,7 @@ object Commit {
    */
   def commit(repoPath: String, commitMsg: String): String = {
 
-    if (Repository.hasIndexFile(repoPath)) {
+    if (Repository.hasIndexFile(repoPath) && IndexUtil.getIndexContent(repoPath).nonEmpty) {
 
       /*_______________ I/O PART _______________*/
       val indexContent = IndexUtil.getIndexAsMap(repoPath)
@@ -61,7 +61,7 @@ object Commit {
 
     // Keep only paths form index lines and split by path elements
     val indexPaths = indexContent.keys.toList
-    val maxDepth = indexPaths.maxBy(_.split(File.separator).length).length
+    val maxDepth = indexPaths.maxBy(_.length).length
     loop(maxDepth, Map(), indexPaths)
   }
 

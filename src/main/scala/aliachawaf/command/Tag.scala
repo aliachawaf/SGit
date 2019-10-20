@@ -7,6 +7,13 @@ import aliachawaf.util.{BranchUtil, CommitUtil, FileUtil}
 
 object Tag {
 
+  /**
+   * Create a new tag for the given SGit repository
+   *
+   * @param repoPath : path of the sgit repository
+   * @param name     : name of the new tag to create
+   * @return the result of tag creating to print (success, fail ..)
+   */
   def tag(repoPath: String, name: String): String = {
 
     val currentBranch = BranchUtil.getCurrentBranch(repoPath)

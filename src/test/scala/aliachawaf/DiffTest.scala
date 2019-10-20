@@ -3,7 +3,7 @@ package aliachawaf
 import java.io.File
 import java.io.File.separator
 
-import aliachawaf.command.{Index, Init}
+import aliachawaf.command.{Diff, Index, Init}
 import aliachawaf.util.{FileUtil, RepoUtil}
 import org.scalatest.{BeforeAndAfterEach, FlatSpec}
 
@@ -19,8 +19,8 @@ class DiffTest extends FlatSpec with BeforeAndAfterEach {
     val repoPath = RepoUtil.getRepoPath(currentDir).get
     val testDir = repoPath + File.separator + "testDir"
     new File(testDir).mkdir()
-    FileUtil.createNewFile(testDir + File.separator + "testFile1", "A\nL\nI\nA\n")
-    FileUtil.createNewFile(testDir + File.separator + "testFile2", "B\nA\nL\nI\nR\nE")
+    FileUtil.createNewFile(testDir + File.separator + "testFile1", "Alia\nLire\nInes\nAlia")
+    FileUtil.createNewFile(testDir + File.separator + "testFile2", "Bien\nAlia\nLire\nInes\nRemi\nEniram")
 
     Index.add(Seq("testDir/testFile1"), repoPath)
   }
@@ -33,7 +33,7 @@ class DiffTest extends FlatSpec with BeforeAndAfterEach {
     Directory(new File(repoPath + File.separator + "testDir")).deleteRecursively()
   }
 
-  "Diff command" should "construct the matrix of the longest common sequence" in {
+  "Diff command" should "get lines differences between two versions of a file" in {
 
     val currentDir = System.getProperty("user.dir")
     val repoPath = RepoUtil.getRepoPath(currentDir).get
@@ -41,7 +41,12 @@ class DiffTest extends FlatSpec with BeforeAndAfterEach {
     val newFileContent = FileUtil.getFileContent(repoPath + separator + "testDir" + separator + "testFile2")
     val oldFileContent = FileUtil.getFileContent(repoPath + separator + "testDir" + separator + "testFile1")
 
+    val matrix = Diff.getMatrixOfComparison(newFileContent, oldFileContent)
 
+    val listDiff = Diff.getDiffLines(matrix, newFileContent.length, oldFileContent.length)
+    val expectedListDiff = List(("++",1), ("++",5), ("++",6), ("--",4))
+
+    assert(listDiff == expectedListDiff)
 
   }
 

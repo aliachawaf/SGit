@@ -16,16 +16,18 @@ class StatusTest extends FlatSpec with BeforeAndAfterEach {
   /** Before each test, we initialize the sgit repository with test files */
   override def beforeEach(): Unit = {
 
+    // Init a repo test
     val repoDir = System.getProperty("user.dir") + separator + "repoDir"
     new File(repoDir).mkdir()
     Init.initialize(repoDir)
 
+    // Create a subfolder testDir
     val testDir = repoDir + separator + "testDir"
     new File(testDir).mkdir()
     FileUtil.createNewFile(testDir + separator + "testFile1", "Hello, world!")
     FileUtil.createNewFile(testDir + separator + "testFile2", "Bonjour tout le monde!")
 
-    // For testing relative paths, we create a subfolder
+    // For testing relative paths, we create a subfolder to testDir
     val testDir2 = testDir + separator + "testDir2"
     new File(testDir2).mkdir()
 

@@ -7,19 +7,20 @@ object CommitUtil {
 
   /**
    *
-   * @param repoPath
+   * @param repoPath      : path of the SGit repository
    * @param currentBranch : name of the current branch in the format "branches/name"
-   * @return the hash of the last commit done, else None if there is no commit done
+   * @return the hash of the last commit done by the current branch, else None if there is no commit yet
    */
   def getLastCommit(repoPath: String, currentBranch: String): Option[String] = {
     val branchPath = repoPath + separator + ".sgit" + separator + currentBranch
-    if (new File(branchPath).exists()) Some(FileUtil.getFileContent(branchPath) mkString "\n")
+    if (new File(branchPath).exists())
+      Some(FileUtil.getFileContent(branchPath) mkString "\n")
     else None
   }
 
   /**
-   * @param repoPath
-   * @return the hash of the tree of the last commit, else None if there is no commit done
+   * @param repoPath : path of the SGit repository
+   * @return the hash of the tree of the last commit for the given SGit repository, else None if there is no commit yet
    */
   def getLastCommitTree(repoPath: String): Option[String] = {
     val currentBranch = BranchUtil.getCurrentBranch(repoPath)
@@ -35,8 +36,9 @@ object CommitUtil {
 
   /**
    *
-   * @param repoPath : path of the sgit repository
-   * @return the given commit tree as a Map(filePath, hash)
+   * @param repoPath : path of the SGit repository
+   * @param treeHash : hash of the commit tree we want to have as a Map, None if there is no tree
+   * @return the given commit tree as a Map(filePath, content), else return None if there is no tree
    */
   def getCommitAsMap(repoPath: String, treeHash: Option[String]): Option[Map[String, List[String]]] = {
 
@@ -84,17 +86,25 @@ object CommitUtil {
   }
 
 
-  def getCommitMessage(commitContent: List[String]) : String = {
+  /**
+   *
+   * @param commitContent
+   * @return the message of the given commit
+   */
+  def getCommitMessage(commitContent: List[String]): String = {
 
-    println(commitContent)
     // If is first commit (no parent)
     if (commitContent.length == 2) commitContent(1).split(" ").tail mkString " "
     else commitContent(2).split(" ").tail mkString " "
   }
 
-  def getCommitParent(commitContent: List[String]) : Option[String] = {
+  /**
+   *
+   * @param commitContent
+   * @return the parent of the given commit, else None if it is the first commit (no parent)
+   */
+  def getCommitParent(commitContent: List[String]): Option[String] = {
 
-    // If is first commit (no parent)
     if (commitContent.length == 2) None
     else Some(commitContent(1).split(" ")(1))
   }

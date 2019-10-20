@@ -9,22 +9,26 @@ import scala.annotation.tailrec
 
 object ResultUtil {
 
+  /* REPOSITORY */
   def notSGitRepository(): String = "fatal: not a sgit repository (or any of the parent directories): .sgit"
 
-  def addResult(nbFiles: Int) = nbFiles + " file(s) added to index."
-
-  def nothingToCommit(repoPath: String) = "On branch " + BranchUtil.getCurrentBranchName(repoPath) + "/n/n nothing to commit"
-
+  /* INIT */
   def initResult(result: Boolean, currentDir: String): String = {
     if (result) "Initialized empty Sgit repository in " + currentDir + File.separator + ".sgit" + File.separator
     else "Already initialized SGit repository"
   }
 
-  // TODO Add files deletions and additions
+  /* ADD */
+  def addResult(nbFiles: Int): String = nbFiles + " file(s) added to index."
+
+  /* COMMIT */
+  def nothingToCommit(repoPath: String): String = "On branch " + BranchUtil.getCurrentBranchName(repoPath) + "/n/n nothing to commit"
+
   def commitResult(branch: String, hash: String, message: String): String = "[" + branch + " " + hash.slice(0, 7) + "] " + message + "\n "
 
   def sameCommitResult(branch: String): String = "On branch " + branch + "\nNothing to commit, working tree clean."
 
+  /* STATUS */
   def statusResult(branch: String,
                    tracked_modified_notAdded: List[String],
                    deleted_notAdded: List[String],
@@ -34,7 +38,7 @@ object ResultUtil {
                    untracked: List[String]): String = {
 
     "On branch " + branch + ".\n\n" +
-    "Changes to be committed:\n\n" +
+      "Changes to be committed:\n\n" +
       GREEN + "new file: " + (tracked_modified_notAdded.mkString("\nnew file: ")) +
       "modified: " + (tracked_committed_modified.mkString("\nmodified: ")) +
       "deleted: " + (deleted_notCommitted.mkString("\ndeleted: ")) +
@@ -50,31 +54,32 @@ object ResultUtil {
 
   def statusNoCommit(repoPath: String): String = "On branch " + BranchUtil.getCurrentBranchName(repoPath) + "\n\nNo commits yet."
 
-  /** TAG **/
-  def tagResult(created: Boolean, name: String) = {
+  /* TAG */
+  def tagResult(created: Boolean, name: String): String = {
     if (created) "Tag '" + name + "' created"
     else "fatal: tag '" + name + "' already exists"
   }
 
   def tagNoCommit() = "fatal: Failed to resolve 'HEAD' as a valid ref (i.e. there is no commit to tag)."
 
-  /** TAG **/
-  def branchResult(created: Boolean, name: String) = {
+  /* BRANCH */
+  def branchResult(created: Boolean, name: String): String = {
     if (created) "Branch '" + name + "' created"
     else "fatal: branch named '" + name + "' already exists"
   }
 
   def branchNoMaster() = "fatal: Not a valid object name: 'master'."
 
-  def branchAVResult(branches: List[BranchTag], tags: List[BranchTag], currentBranch: String) : String = {
+  def branchAVResult(branches: List[BranchTag], tags: List[BranchTag], currentBranch: String): String = {
 
     val current = branches.filter(_.name == currentBranch).head
-    val resultCurrentBranch = "branches : \n" + Console.GREEN + current.name + " " + current.hash.slice(0,7) + " " + current.commitMessage + Console.RESET + "\n"
+    val resultCurrentBranch = "branches : \n" + Console.GREEN + current.name + " " + current.hash.slice(0, 7) + " " + current.commitMessage + Console.RESET + "\n"
     val resultBranches = resultCurrentBranch + branches.filter(_.name != currentBranch).map(b => b.toString).mkString("\n")
 
     resultBranches + "\n\ntags : \n" + tags.map(t => t.toString).mkString("\n")
   }
 
+  /* LOG */
   def logNotCommit() = "There is no commit yet"
 
   def logResult(commits: List[CommitToDiff], option: Option[(List[FilesToDiff], String) => String], repoPath: String): String = {
@@ -99,6 +104,7 @@ object ResultUtil {
           }
       }
     }
+
     loop(commits, "")
   }
 }

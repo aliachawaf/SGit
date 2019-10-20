@@ -35,9 +35,9 @@ object Commit {
 
 
   /**
-   * @return The hash of the Commit Tree created recursively
    * @param repoPath     : path of the SGit repository
    * @param indexContent : Map containing the lines of INDEX with 'paths as keys' and 'hashes as values'
+   * @return The hash of the Commit Tree created recursively
    */
   def createCommitTree(repoPath: String, indexContent: Map[String, String]): Map[String, List[String]] = {
 
@@ -69,11 +69,12 @@ object Commit {
 
 
   /**
+   * Create a commit in .sgit/objects
    *
-   * @param repoPath
+   * @param repoPath       : path of the SGit repository
    * @param commitTreeHash : hash of the new tree created with the commit
    * @param commitMsg      : message of the commit
-   * @return the msg to display to the user after sgit commit
+   * @return the message to display to the user after sgit commit
    */
   def addCommitInObjects(repoPath: String, commitTreeHash: String, commitMsg: String): String = {
 
@@ -192,10 +193,11 @@ object Commit {
   }
 
   /**
-   * Return the path without elements having currentDepth
+   * Remove elements of the path having currentDepth
    *
    * @param path         : path split by elements in Array
    * @param currentDepth : depth used to treat elements in paths having it
+   * @return the path with a max depth equal to currentDepth - 1
    */
   def removeElementsOfDepth(path: String, currentDepth: Int): String = {
 

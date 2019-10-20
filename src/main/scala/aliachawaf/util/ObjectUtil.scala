@@ -8,7 +8,7 @@ object ObjectUtil {
 
   /**
    * @param s : a String, in general the content of the Object we want to hash
-   * @return : the hash of s
+   * @return the hash of s
    */
   def hash(s: String): String = {
     val md = MessageDigest.getInstance("SHA-1")
@@ -19,11 +19,11 @@ object ObjectUtil {
   }
 
   /**
-   * Create the object file in .sgit/objects
+   * Create the object file in .sgit/objects of the given SGit repository
    *
    * @param repoPath      : path of the SGit repository
    * @param objectContent : content of the SGit object (tree or blob) to put in the file and hash for the file name
-   * @return : the hash of the object created
+   * @return the hash of the object created
    */
   def addSGitObject(repoPath: String, objectContent: String): String = {
     val objectHash = hash(objectContent)
@@ -33,7 +33,14 @@ object ObjectUtil {
   }
 
 
-  def createTreeObjects(trees: List[List[String]], repoPath: String) : Unit = {
+  /**
+   * Create trees in .sgit/objects of the given SGit repository
+   *
+   * @param trees    : content if the trees we want to create
+   * @param repoPath : path of the SGit repository
+   */
+  @scala.annotation.tailrec
+  def createTreeObjects(trees: List[List[String]], repoPath: String): Unit = {
     trees match {
       case Nil => {}
       case head :: tail => {
@@ -43,7 +50,14 @@ object ObjectUtil {
     }
   }
 
-  def getObjectContent(repoPath: String, hashObject: String) : List[String] ={
+  /**
+   * Read the content of an object file of the given SGit repository
+   *
+   * @param repoPath   : path of the SGit repository
+   * @param hashObject : hash of the object we want to read
+   * @return the content of the object as a list of its lines
+   */
+  def getObjectContent(repoPath: String, hashObject: String): List[String] = {
     val objectPath = repoPath + File.separator + ".sgit" + File.separator + "objects" + File.separator + hashObject
     FileUtil.getFileContent(objectPath)
   }

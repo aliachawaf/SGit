@@ -3,25 +3,30 @@ package aliachawaf
 import java.io.File
 
 import aliachawaf.util.{BranchUtil, CommitUtil, FileUtil, ObjectUtil}
-import aliachawaf.util.ResultUtil.logNotCommit
+import aliachawaf.util.ResultUtil.{logNotCommit, logResult}
 
 import Console.{RESET, YELLOW}
 import scala.annotation.tailrec
 
-class CommitToDiff(val filesToDiff: List[FilesToDiff])
+class CommitToDiff(val filesToDiff: List[FilesToDiff], val commitHash: String, val commitMsg: String)
 
 object Log {
 
   def log(repoPath: String, option: String): String = {
 
+    /*___________________  I/O PART : READING  ____________________*/
+
     val currentBranch = BranchUtil.getCurrentBranch(repoPath)
     val lastCommit = CommitUtil.getLastCommit(repoPath, currentBranch)
 
-    if (lastCommit.isEmpty) logNotCommit()
-    else {
-      val allCommits = getCommitLog(repoPath, lastCommit.get)
-      val allCommitsToDiff = getFilesToDiff_ForAllCommits(allCommits, repoPath)
+    val allCommits = getCommitLog(repoPath, lastCommit.get)
+    val allCommitsToDiff = getFilesToDiff_ForAllCommits(allCommits, repoPath)
 
+    /*___________________  PURE FUNCTIONAL PART ___________________*/
+
+    if (lastCommit.isEmpty) logNotCommit()
+
+    else {
       option match {
         case "" => logResult(allCommitsToDiff, None, repoPath)
         case "patch" => logResult(allCommitsToDiff, Some(Diff.getDiffResultAllFiles), repoPath)
@@ -54,32 +59,6 @@ object Log {
 
     loop(lastCommit, List())
   }
-
-  def logResult(commits: List[CommitToDiff], option: Option[(List[FilesToDiff], String) => String], repoPath: String): String = {
-
-    @tailrec
-    def loop(remainingCommits: List[CommitToDiff], result: String): String = {
-
-      remainingCommits match {
-
-        case Nil => result
-
-        case commitToDiff :: tail =>
-
-          if (option.isEmpty) {
-            val resultUpdated = YELLOW + "commit " + "TO DO GET SHA" + RESET + "\n     " + "TO DO GET MSG" + "\n\n" + result
-            loop(tail, resultUpdated)
-          }
-          else {
-            val diffWithParent = option.get(commitToDiff.filesToDiff, repoPath)
-            val resultUpdated = YELLOW + "commit " + "TO DO GET SHA" + RESET + "\n     " + "TO DO GET MSG" + "\n" + diffWithParent + "\n\n" + result
-            loop(tail, resultUpdated)
-          }
-      }
-    }
-    loop(commits, "")
-  }
-
 
   /**
    *
@@ -128,6 +107,7 @@ object Log {
 
           val treeHash = head._2.split("\n").toList(0).split(" ")(1)
           val newFiles = CommitUtil.getCommitAsMap(repoPath, Some(treeHash))
+          val commitMsg = CommitUtil.getCommitMessage(head._2.split("\n").toList)
 
           if (parent.isDefined) {
 
@@ -139,21 +119,18 @@ object Log {
 
             val filesToDiff = getFilesToDiff_ForOneCommit(newFiles.get, oldFiles.get, repoPath)
 
-            val resultUpdated = new CommitToDiff(filesToDiff) :: result
+            val resultUpdated = new CommitToDiff(filesToDiff, head._1, commitMsg) :: result
             loop(tail, resultUpdated)
           }
           else {
 
             val filesToDiff = getFilesToDiff_ForOneCommit(newFiles.get, Map().withDefaultValue(List()), repoPath)
 
-            val resultUpdated = new CommitToDiff(filesToDiff) :: result
+            val resultUpdated = new CommitToDiff(filesToDiff, head._1, commitMsg) :: result
             loop(tail, resultUpdated)
           }
-
-
       }
     }
-
     loop(commits, List())
   }
 }

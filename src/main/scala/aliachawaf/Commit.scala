@@ -14,7 +14,7 @@ object Commit {
    */
   def commit(repoPath: String, commitMsg: String): String = {
 
-    if (Repository.hasIndexFile(repoPath) && IndexUtil.getIndexContent(repoPath).nonEmpty) {
+    if (IndexUtil.indexFileExists(repoPath) && IndexUtil.getIndexContent(repoPath).nonEmpty) {
 
       /*_______________ I/O PART _______________*/
       val indexContent = IndexUtil.getIndexAsMap(repoPath)
@@ -24,7 +24,9 @@ object Commit {
       val commitTreeHash = ObjectUtil.hash(commitTree("") mkString "\n")
 
       /*_______________ I/O PART _______________*/
+      // create all trees in .sgit/objects
       ObjectUtil.createTreeObjects(commitTree.values.toList, repoPath)
+      // create the commit in .sgit/objects
       addCommitInObjects(repoPath, commitTreeHash, commitMsg)
     }
 
@@ -73,7 +75,7 @@ object Commit {
    * @param commitMsg      : message of the commit
    * @return the msg to display to the user after sgit commit
    */
-  def addCommitInObjects(repoPath: String, commitTreeHash: String, commitMsg: String) = {
+  def addCommitInObjects(repoPath: String, commitTreeHash: String, commitMsg: String): String = {
 
     /** Commit content :
      *    - tree hash
@@ -149,7 +151,6 @@ object Commit {
 
         // Create the Trees objects in .sgit/objects
         val treesContent = folders.map(treePath => parentWithTrees(treePath) mkString "\n")
-        //treesContent.foreach(content => ObjectUtil.addSGitObject(repoPath, content))
         parentWithTrees
       }
     }
@@ -166,17 +167,16 @@ object Commit {
   def updateParentContent(parentContent: Map[String, List[String]], parentPathsOfNewContent: List[String], newContentLines: List[String]): Map[String, List[String]] = {
     parentPathsOfNewContent match {
       case Nil => parentContent
-      case path :: tail => {
+      case path :: tail =>
         val parentUpdated = updateParentWithOneContent(parentContent, path, newContentLines.head)
         updateParentContent(parentUpdated, tail, newContentLines.tail)
-      }
     }
   }
 
   /**
    *
    * @param parentContent          : Map with the content of the parent directory. This content will be updated with the new content
-   * @param pathParentOfNewContent : the panret path of the new content we want to add in parentContent
+   * @param pathParentOfNewContent : the path of the new content we want to add in parentContent
    * @param newContent             : the new content we want to add
    * @return Add the newContent in the parentContent
    */

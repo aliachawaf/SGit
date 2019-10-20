@@ -43,9 +43,6 @@ object Repository {
   /* Returns true if the path is in a SGit repository */
   def isInRepository(currentDirectory: String): Boolean = Repository.getRepoPath(currentDirectory).isDefined
 
-  /* Returns true if the given path contains INDEX file */
-  def hasIndexFile(repoPath: String): Boolean = new File(repoPath + File.separator + ".sgit" + File.separator + "INDEX").exists()
-
   /* Returns the path containing .sgit folder if exists,
      else returns None if the given path in parameter is not in a SGit repository
   */

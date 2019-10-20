@@ -60,11 +60,8 @@ object Status {
    * @return the list (paths) of the untracked files (not added yet in .sgit/INDEX)
    */
   def get_Untracked(allRepoFiles: Map[String, List[String]], indexMap: Map[String, String], currentDir: String, repoPath: String): List[String] = {
-
-    val indexPaths = indexMap.keys.toList
-    val filesPaths = allRepoFiles.keys.toList
-
-    val untracked = filesPaths.filter(!indexPaths.contains(_))
+    
+    val untracked = allRepoFiles.keys.toList diff indexMap.keys.toList
     toRelativePaths(untracked, currentDir, repoPath)
   }
 
@@ -73,7 +70,9 @@ object Status {
    */
   def get_Tracked_Modified_NotAdded(allRepoFiles: Map[String, List[String]], indexMap: Map[String, String], currentDir: String, repoPath: String): List[String] = {
 
-    val tracked = indexMap.keys.toList
+    val untracked = get_Untracked(allRepoFiles, indexMap, currentDir, repoPath)
+    val tracked = indexMap.keys.toList diff untracked
+    
     val newHashTracked = tracked.map(allRepoFiles(_))
     val lastVersionMap = (tracked zip newHashTracked).toMap
 
@@ -88,15 +87,12 @@ object Status {
   //def get_Tracked_NeverCommitted(lastCommitTree: Option[String], allRepoFiles: Map[String, List[String]], indexMap: Map[String, String], currentDir: String, repoPath: String): List[String] = {
   def get_Tracked_NeverCommitted(commitTree: Option[Map[String, List[String]]], indexMap: Map[String, String], currentDir: String, repoPath: String): List[String] = {
 
-    println("YES")
-    if (commitTree.isEmpty) indexMap.keys.toList
+    val indexPaths = indexMap.keys.toList
+
+    if (commitTree.isEmpty) toRelativePaths(indexPaths, currentDir, repoPath)
     else {
-      println("YES2")
-      val paths_Tracked_NotCommitted = indexMap.keys.toList diff commitTree.get.keys.toList
-      println(paths_Tracked_NotCommitted)
-      val test = toRelativePaths(paths_Tracked_NotCommitted, currentDir, repoPath)
-      println(test)
-      test
+      val paths_Tracked_NotCommitted = indexPaths diff commitTree.get.keys.toList
+      toRelativePaths(paths_Tracked_NotCommitted, currentDir, repoPath)
     }
   }
 
@@ -135,11 +131,11 @@ object Status {
    */
   def get_Deleted_NotCommitted(commitTree: Option[Map[String, List[String]]], indexContent: Map[String, String], currentDir: String, repoPath: String): List[String] = {
 
-    println("YES")
     if (commitTree.isEmpty) List()
     else {
+      println("commo" + commitTree.get)
+      println("inde" + indexContent)
       val list = commitTree.get.keys.toList diff indexContent.keys.toList
-      println("LSIT " + list)
       toRelativePaths(list, currentDir, repoPath)
     }
   }

@@ -20,7 +20,8 @@ object Index {
 
     /*_______________ I/O PART : READING _______________*/
 
-    if (!Repository.hasIndexFile(repoPath)) new File(repoPath + File.separator + ".sgit" + File.separator + "INDEX").createNewFile()
+    if (!IndexUtil.indexFileExists(repoPath)) IndexUtil.createEmptyIndexFile(repoPath)
+
     val indexContent = IndexUtil.getIndexContent(repoPath)
 
     val filesNotFound = arguments.map(new File(_)).filter(!_.exists()).map(_.getAbsolutePath.replace(repoPath + File.separator, ""))
@@ -84,23 +85,20 @@ object Index {
 
     removePathAlreadyIndexed(file.filePath, indexContent, repoPath)
 
-    val indexPath = repoPath + File.separator + ".sgit" + File.separator + "INDEX"
     val hash = ObjectUtil.hash(file.content)
     val content = hash + " " + file.filePath + "\n"
-
-    FileUtil.writeFile(new File(indexPath), content.getBytes.toList, append = true)
+    IndexUtil.editIndexFile(repoPath, content, append = true)
   }
 
   def removePathAlreadyIndexed(filePath: String, indexContent: List[String], repoPath: String): Unit = {
-    val indexPath = repoPath + File.separator + ".sgit" + File.separator + "INDEX"
     val indexString = indexContent mkString "\n"
 
     // Check if INDEX content contains the filePath,
     // if yes we have to remove it in order to replace it with the new version (new hashed id)
     if (indexString.contains(filePath)) {
       val indexLinesWithoutFile = indexContent.filterNot(_.split(" ")(1) == filePath)
-      if (indexLinesWithoutFile.isEmpty) FileUtil.writeFile(new File(indexPath), "".getBytes.toList, append = false)
-      else FileUtil.writeFile(new File(indexPath), ((indexLinesWithoutFile mkString "\n") + "\n").getBytes.toList, append = false)
+      if (indexLinesWithoutFile.isEmpty) IndexUtil.editIndexFile(repoPath, "", append = false)
+      else IndexUtil.editIndexFile(repoPath, (indexLinesWithoutFile mkString "\n") + "\n", append = false)
     }
   }
 

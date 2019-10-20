@@ -1,9 +1,13 @@
 package aliachawaf.util
 
 import java.io.File
-import Console.{GREEN, RED, RESET}
 
+import aliachawaf.{CommitToDiff, FilesToDiff}
+
+import Console.{GREEN, RED, RESET, YELLOW}
 import aliachawaf.Status.{get_Tracked_Committed_Modified, get_Tracked_Modified_NotAdded, get_Tracked_NeverCommitted, get_Untracked}
+
+import scala.annotation.tailrec
 
 object ResultUtil {
 
@@ -75,4 +79,28 @@ object ResultUtil {
 
   def logNotCommit() = "There is no commit yet"
 
+  def logResult(commits: List[CommitToDiff], option: Option[(List[FilesToDiff], String) => String], repoPath: String): String = {
+
+    @tailrec
+    def loop(remainingCommits: List[CommitToDiff], result: String): String = {
+
+      remainingCommits match {
+
+        case Nil => result
+
+        case commitToDiff :: tail =>
+
+          if (option.isEmpty) {
+            val resultUpdated = YELLOW + "commit " + commitToDiff.commitHash + RESET + "\n     " + commitToDiff.commitMsg + "\n\n" + result
+            loop(tail, resultUpdated)
+          }
+          else {
+            val diffWithParent = option.get(commitToDiff.filesToDiff, repoPath)
+            val resultUpdated = YELLOW + "commit " + commitToDiff.commitHash + RESET + "\n     " + commitToDiff.commitMsg + "\n" + diffWithParent + "\n\n" + result
+            loop(tail, resultUpdated)
+          }
+      }
+    }
+    loop(commits, "")
+  }
 }

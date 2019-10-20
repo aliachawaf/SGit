@@ -28,7 +28,7 @@ object CommitUtil {
     val lastCommit = getLastCommit(repoPath, currentBranch)
 
     if (lastCommit.isDefined) {
-      val lastCommitContent = FileUtil.getFileContent(repoPath + separator + ".sgit" + separator + "objects" + separator + lastCommit.get)
+      val lastCommitContent = ObjectUtil.getObjectContent(repoPath, lastCommit.get)
       Some(lastCommitContent(0).split(" ")(1))
     }
     else None
@@ -60,18 +60,23 @@ object CommitUtil {
             val blobHash = head.split(" ")(1)
             val blobContent = ObjectUtil.getObjectContent(repoPath, blobHash)
 
-            val blobName = parentPath + head.split(" ")(2)
+            val blobName = parentPath + separator + head.split(" ")(2)
 
             val newCommitMap = commitMap + (blobName -> blobContent)
             loop(tail, parentPath, newCommitMap)
           }
           else {
             val subTreeHash = head.split(" ")(1)
-            val subTreeName = parentPath + head.split(" ")(2)
-            val contentSubTree = FileUtil.getFileContent(repoPath + separator + ".sgit" + separator + "objects" + separator + subTreeHash)
-            val newCommitMap = loop(contentSubTree, parentPath + separator + subTreeName, commitMap)
+            val subTreeName = head.split(" ")(2)
+            val contentSubTree = ObjectUtil.getObjectContent(repoPath, subTreeHash)
 
-            loop(tail, parentPath, newCommitMap)
+            if (parentPath.isEmpty) {
+              val newCommitMap = loop(contentSubTree, subTreeName, commitMap)
+              loop(tail, parentPath, newCommitMap)
+            } else {
+              val newCommitMap = loop(contentSubTree, parentPath + separator + subTreeName, commitMap)
+              loop(tail, parentPath, newCommitMap)
+            }
           }
       }
     }

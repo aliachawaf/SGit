@@ -1,9 +1,8 @@
-package aliachawaf
+package aliachawaf.command
 
 import java.io.File
-import java.io.File.separator
 
-import aliachawaf.util.ResultUtil._
+import aliachawaf.util.ResultUtil.{tagNoCommit, tagResult}
 import aliachawaf.util.{BranchUtil, CommitUtil, FileUtil}
 
 object Tag {
@@ -15,7 +14,7 @@ object Tag {
 
     // Check if there is a commit, else no tag can be created
     if (lastCommit.isDefined) {
-      val tagPath = repoPath + separator + ".sgit" + separator + "tags" + separator + name
+      val tagPath = repoPath + File.separator + ".sgit" + File.separator + "tags" + File.separator + name
 
       if (new File(tagPath).exists()) tagResult(created = false, name)
       else {

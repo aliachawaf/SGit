@@ -4,8 +4,9 @@ import java.io.File
 import java.io.File.separator
 import java.nio.file.Paths
 
-import aliachawaf.Status._
-import aliachawaf.util.{CommitUtil, FileUtil, IndexUtil}
+import aliachawaf.command.{Commit, Index, Init}
+import aliachawaf.command.Status._
+import aliachawaf.util.{CommitUtil, FileUtil, IndexUtil, RepoUtil}
 import org.scalatest.{BeforeAndAfterEach, FlatSpec}
 
 import scala.reflect.io.Directory
@@ -17,7 +18,7 @@ class StatusTest extends FlatSpec with BeforeAndAfterEach {
 
     val repoDir = System.getProperty("user.dir") + separator + "repoDir"
     new File(repoDir).mkdir()
-    Repository.initialize(repoDir)
+    Init.initialize(repoDir)
 
     val testDir = repoDir + separator + "testDir"
     new File(testDir).mkdir()
@@ -114,9 +115,6 @@ class StatusTest extends FlatSpec with BeforeAndAfterEach {
     val commitTree2 = CommitUtil.getCommitAsMap(repoPath, lastCommitTree2)
     val indexMap2 = IndexUtil.getIndexAsMap(repoPath)
 
-    println(commitTree2)
-    println(indexMap2)
-
     val filesAfterCommit = get_Tracked_NeverCommitted(commitTree2, indexMap2, testDir2, repoPath)
 
     assert(filesAfterCommit.isEmpty)
@@ -126,7 +124,7 @@ class StatusTest extends FlatSpec with BeforeAndAfterEach {
   it should "get tracked modified and committed files (relative paths)" in {
 
     val repoDir = System.getProperty("user.dir") + separator + "repoDir"
-    val repoPath = Repository.getRepoPath(repoDir).get
+    val repoPath = RepoUtil.getRepoPath(repoDir).get
     val testDir2 = repoPath + separator + "testDir" + separator + "testDir2"
 
     val file1AbsolutePath = repoPath + separator + "testDir" + separator + "testFile1"
@@ -162,7 +160,7 @@ class StatusTest extends FlatSpec with BeforeAndAfterEach {
   it should "get all the tracked files but not present in working tree (deleted)" in {
 
     val repoDir = System.getProperty("user.dir") + separator + "repoDir"
-    val repoPath = Repository.getRepoPath(repoDir).get
+    val repoPath = RepoUtil.getRepoPath(repoDir).get
     val testDir2 = repoPath + separator + "testDir" + separator + "testDir2"
 
     val file1AbsolutePath = repoPath + separator + "testDir" + separator + "testFile1"

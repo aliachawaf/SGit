@@ -1,4 +1,4 @@
-package aliachawaf
+package aliachawaf.command
 
 import java.io.File
 import java.nio.file.Paths
@@ -11,7 +11,7 @@ object Status {
 
     /*___________________  I/O PART : READING  ____________________*/
 
-    val repoPath = Repository.getRepoPath(currentDir).get
+    val repoPath = RepoUtil.getRepoPath(currentDir).get
     val branch = BranchUtil.getCurrentBranchName(repoPath)
 
     val allRepoFiles = getAllRepoFiles(repoPath)
@@ -56,7 +56,7 @@ object Status {
    * @return the list (paths) of the untracked files (not added yet in .sgit/INDEX)
    */
   def get_Untracked(allRepoFiles: Map[String, List[String]], indexMap: Map[String, String], currentDir: String, repoPath: String): List[String] = {
-    
+
     val untracked = allRepoFiles.keys.toList diff indexMap.keys.toList
     toRelativePaths(untracked, currentDir, repoPath)
   }
@@ -68,7 +68,7 @@ object Status {
 
     val untracked = get_Untracked(allRepoFiles, indexMap, currentDir, repoPath)
     val tracked = indexMap.keys.toList diff untracked
-    
+
     val newHashTracked = tracked.map(allRepoFiles(_))
     val lastVersionMap = (tracked zip newHashTracked).toMap
 
@@ -129,8 +129,6 @@ object Status {
 
     if (commitTree.isEmpty) List()
     else {
-      println("commo" + commitTree.get)
-      println("inde" + indexContent)
       val list = commitTree.get.keys.toList diff indexContent.keys.toList
       toRelativePaths(list, currentDir, repoPath)
     }

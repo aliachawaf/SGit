@@ -2,7 +2,7 @@ package aliachawaf.util
 
 import java.io.File
 
-import aliachawaf.{CommitToDiff, FilesToDiff}
+import aliachawaf.command.{CommitToDiff, FilesToDiff}
 
 import scala.Console.{GREEN, RED, RESET, YELLOW}
 import scala.annotation.tailrec
@@ -37,18 +37,22 @@ object ResultUtil {
                    deleted_notCommitted: List[String],
                    untracked: List[String]): String = {
 
+
     "On branch " + branch + ".\n\n" +
       "Changes to be committed:\n\n" +
-      GREEN + "new file: " + (tracked_modified_notAdded.mkString("\nnew file: ")) +
-      "modified: " + (tracked_committed_modified.mkString("\nmodified: ")) +
-      "deleted: " + (deleted_notCommitted.mkString("\ndeleted: ")) +
+      GREEN +
+      (tracked_modified_notAdded.map("new file: " + _) mkString "\n") + "\n" +
+      (tracked_committed_modified.map("modified: " + _) mkString "\n") + "\n" +
+      (deleted_notCommitted.map("deleted: " + _) mkString "\n") +
       RESET + "\n\n" +
       "Changes not staged for commit:\n (use \"sgit add<file>...\" to update what will be committed)\n\n" +
-      RED + (tracked_neverCommitted mkString "\n") +
-      "deleted: " + (deleted_notAdded.mkString("\ndeleted: ")) +
+      RED +
+      (tracked_neverCommitted mkString "\n") + "\n" +
+      (deleted_notAdded.map("deleted: " + _) mkString "\n") +
       RESET + "\n\n" +
       "Untracked files:\n (use \"sgit add <file>...\" to include in what will be committed)\n\n" +
-      RED + (untracked mkString "\n") +
+      RED +
+      (untracked mkString "\n") +
       RESET + "\n\n"
   }
 

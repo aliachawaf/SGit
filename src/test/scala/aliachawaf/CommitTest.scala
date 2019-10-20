@@ -2,10 +2,11 @@ package aliachawaf
 
 import java.io.File
 
-import aliachawaf.Commit.commit
+import aliachawaf.command.Commit.commit
+import aliachawaf.command.{Index, Init}
 import aliachawaf.util.BranchUtil._
 import aliachawaf.util.CommitUtil._
-import aliachawaf.util.{BranchUtil, FileUtil, ObjectUtil}
+import aliachawaf.util.{BranchUtil, FileUtil, ObjectUtil, RepoUtil}
 import org.scalatest.{BeforeAndAfterEach, FlatSpec}
 
 import scala.reflect.io.Directory
@@ -15,9 +16,9 @@ class CommitTest extends FlatSpec with BeforeAndAfterEach {
   /** Before each test, we initialize the sgit repository with test files */
   override def beforeEach(): Unit = {
     val currentDir = System.getProperty("user.dir")
-    Repository.initialize(currentDir)
+    Init.initialize(currentDir)
 
-    val repoPath = Repository.getRepoPath(currentDir).get
+    val repoPath = RepoUtil.getRepoPath(currentDir).get
     val testDir = repoPath + File.separator + "testDir"
     new File(testDir).mkdir()
     FileUtil.createNewFile(testDir + File.separator + "testFile1", "Hello, world!")
@@ -29,7 +30,7 @@ class CommitTest extends FlatSpec with BeforeAndAfterEach {
   // We delete the sgit repository and files created after each test
   override def afterEach(): Unit = {
     val currentDir = System.getProperty("user.dir")
-    val repoPath = Repository.getRepoPath(currentDir).get
+    val repoPath = RepoUtil.getRepoPath(currentDir).get
     Directory(new File(repoPath + File.separator + ".sgit")).deleteRecursively()
     Directory(new File(repoPath + File.separator + "testDir")).deleteRecursively()
   }
@@ -37,7 +38,7 @@ class CommitTest extends FlatSpec with BeforeAndAfterEach {
   "A Commit" should "create the branch in .sgit/branches if it is its first commit" in {
 
     val currentDir = System.getProperty("user.dir")
-    val repoPath = Repository.getRepoPath(currentDir).get
+    val repoPath = RepoUtil.getRepoPath(currentDir).get
     val branchPath = repoPath + File.separator + ".sgit" + File.separator + BranchUtil.getCurrentBranch(repoPath)
 
     assert(!new File(branchPath).exists())
@@ -47,7 +48,7 @@ class CommitTest extends FlatSpec with BeforeAndAfterEach {
 
   it should "not create commit object if the previous commit is the same" in {
     val currentDir = System.getProperty("user.dir")
-    val repoPath = Repository.getRepoPath(currentDir).get
+    val repoPath = RepoUtil.getRepoPath(currentDir).get
     val branch = BranchUtil.getCurrentBranch(repoPath)
 
     assert(getLastCommit(repoPath, branch).isEmpty)
@@ -64,7 +65,7 @@ class CommitTest extends FlatSpec with BeforeAndAfterEach {
   it should "create commit in .sgit/objects with the right content" in {
 
     val currentDir = System.getProperty("user.dir")
-    val repoPath = Repository.getRepoPath(currentDir).get
+    val repoPath = RepoUtil.getRepoPath(currentDir).get
     val branch = BranchUtil.getCurrentBranch(repoPath)
 
     commit(repoPath, "first commit")
@@ -89,7 +90,7 @@ class CommitTest extends FlatSpec with BeforeAndAfterEach {
 
   it should "update the current branch with the commit" in {
     val currentDir = System.getProperty("user.dir")
-    val repoPath = Repository.getRepoPath(currentDir).get
+    val repoPath = RepoUtil.getRepoPath(currentDir).get
     val branch = getCurrentBranch(repoPath)
 
     commit(repoPath, "commit1")

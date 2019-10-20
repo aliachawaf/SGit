@@ -1,11 +1,9 @@
-package aliachawaf
+package aliachawaf.command
 
 import java.io.File
-import java.io.File.separator
 
 import aliachawaf.util.ResultUtil.{branchNoMaster, branchResult}
 import aliachawaf.util.{BranchUtil, CommitUtil, FileUtil, ResultUtil}
-
 
 object Branch {
 
@@ -37,7 +35,7 @@ object Branch {
 
     if (lastCommit.isDefined) {
 
-      val branchPath = repoPath + separator + ".sgit" + separator + "branches" + separator + name
+      val branchPath = repoPath + File.separator + ".sgit" + File.separator + "branches" + File.separator + name
 
       if (new File(branchPath).exists()) branchResult(created = false, name)
       else {

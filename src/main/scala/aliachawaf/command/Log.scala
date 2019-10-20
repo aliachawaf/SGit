@@ -1,4 +1,4 @@
-package aliachawaf
+package aliachawaf.command
 
 import aliachawaf.util.ResultUtil.{logNotCommit, logResult}
 import aliachawaf.util.{BranchUtil, CommitUtil, ObjectUtil}

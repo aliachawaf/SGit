@@ -2,8 +2,9 @@ package aliachawaf
 
 import java.io.File
 
-import aliachawaf.Index.add
-import aliachawaf.util.{FileUtil, IndexUtil, ObjectUtil}
+import aliachawaf.command.Index.add
+import aliachawaf.command.Init
+import aliachawaf.util.{FileUtil, IndexUtil, ObjectUtil, RepoUtil}
 import org.scalatest.{BeforeAndAfterEach, FlatSpec}
 
 import scala.reflect.io.Directory
@@ -14,9 +15,9 @@ class IndexTest extends FlatSpec with BeforeAndAfterEach {
   override def beforeEach(): Unit = {
     val dir = System.getProperty("user.dir") + File.separator + "dir"
     new File(dir).mkdir()
-    Repository.initialize(dir)
+    Init.initialize(dir)
 
-    val repoPath = Repository.getRepoPath(dir).get
+    val repoPath = RepoUtil.getRepoPath(dir).get
     val testDir = repoPath + File.separator + "testDir"
     new File(testDir).mkdir()
     FileUtil.createNewFile(testDir + File.separator + "testFile1", "Hello, world!")

@@ -2,7 +2,8 @@ package aliachawaf
 
 import java.io.File
 
-import aliachawaf.util.{BranchUtil, CommitUtil, FileUtil, ObjectUtil}
+import aliachawaf.command.{Commit, Index, Init, Log}
+import aliachawaf.util.{BranchUtil, CommitUtil, FileUtil, ObjectUtil, RepoUtil}
 import org.scalatest.{BeforeAndAfterEach, FlatSpec}
 
 import scala.reflect.io.Directory
@@ -12,9 +13,9 @@ class LogTest extends FlatSpec with BeforeAndAfterEach {
   /** Before each test, we initialize the sgit repository with test files */
   override def beforeEach(): Unit = {
     val currentDir = System.getProperty("user.dir")
-    Repository.initialize(currentDir)
+    Init.initialize(currentDir)
 
-    val repoPath = Repository.getRepoPath(currentDir).get
+    val repoPath = RepoUtil.getRepoPath(currentDir).get
     val testDir = repoPath + File.separator + "testDir"
     new File(testDir).mkdir()
     FileUtil.createNewFile(testDir + File.separator + "testFile1", "Hello, world!")
@@ -24,7 +25,7 @@ class LogTest extends FlatSpec with BeforeAndAfterEach {
   // We delete the sgit repository and files created after each test
   override def afterEach(): Unit = {
     val currentDir = System.getProperty("user.dir")
-    val repoPath = Repository.getRepoPath(currentDir).get + File.separator + ".sgit"
+    val repoPath = RepoUtil.getRepoPath(currentDir).get + File.separator + ".sgit"
     Directory(new File(repoPath)).deleteRecursively()
     Directory(new File(repoPath + File.separator + "testDir")).deleteRecursively()
   }
@@ -32,7 +33,7 @@ class LogTest extends FlatSpec with BeforeAndAfterEach {
   "The Log command" should "get all the commits for the current branch" in {
 
     val currentDir = System.getProperty("user.dir")
-    val repoPath = Repository.getRepoPath(currentDir).get
+    val repoPath = RepoUtil.getRepoPath(currentDir).get
     val currentBranch = BranchUtil.getCurrentBranch(repoPath)
 
     Index.add(Seq("testDir/testFile1"), repoPath)

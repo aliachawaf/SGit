@@ -1,4 +1,4 @@
-package aliachawaf
+package aliachawaf.command
 
 import java.io.File
 
@@ -24,7 +24,7 @@ object Diff {
 
   /**
    *
-   * @param repoPath
+   * @param repoPath : path of the SGit repository
    * @param indexMap : index given as a Map with (path -> blobHash)
    * @return all the files we have to do the diff on it
    */
@@ -53,7 +53,7 @@ object Diff {
    *
    * @param newFile : content of the new file version as (list of the lines)
    * @param oldFile : content of the old file version as (list of the lines)
-   * @return
+   * @return the matrix of the longest common subsequence given as Map ( (line index in newFile, line index in oldFile) -> value)
    */
   def getMatrixOfComparison(newFile: List[String], oldFile: List[String]): Map[(Int, Int), Int] = {
 
@@ -88,6 +88,13 @@ object Diff {
     loop(0, 0, Map())
   }
 
+  /**
+   *
+   * @param matrix
+   * @param sizeNewFile
+   * @param sizeOldFile
+   * @return
+   */
   def getDiffLines(matrix: Map[(Int, Int), Int], sizeNewFile: Int, sizeOldFile: Int): List[(String, Int)] = {
 
     @tailrec
@@ -126,6 +133,13 @@ object Diff {
     loop(sizeNewFile, sizeOldFile, List())
   }
 
+  /**
+   *
+   * @param linesDiff
+   * @param newFile
+   * @param oldFile
+   * @return
+   */
   def getDiffResultOneFile(linesDiff: List[(String, Int)], newFile: List[String], oldFile: List[String]): String = {
 
     @tailrec
@@ -149,6 +163,12 @@ object Diff {
     loop("", linesDiff)
   }
 
+  /**
+   *
+   * @param listNewOld
+   * @param repoPath
+   * @return
+   */
   def getDiffResultAllFiles(listNewOld: List[FilesToDiff], repoPath: String): String = {
 
     @tailrec
@@ -178,6 +198,12 @@ object Diff {
   }
 
 
+  /**
+   *
+   * @param listNewOld
+   * @param repoPath
+   * @return
+   */
   def getDiffAllFilesOptionStat(listNewOld: List[FilesToDiff], repoPath: String): String = {
     @tailrec
     def loop(currentListNewOld: List[FilesToDiff],

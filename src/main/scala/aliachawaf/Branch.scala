@@ -9,6 +9,12 @@ import aliachawaf.util.ResultUtil.{branchNoMaster, branchResult}
 
 object Branch {
 
+  def branch(repoPath: String, option: Boolean, name: String) : String = {
+
+    if (option) branchAV(repoPath)
+    else createNewBranch(repoPath, name)
+  }
+
   /**
    *
    * @param repoPath : path of the sgit repository

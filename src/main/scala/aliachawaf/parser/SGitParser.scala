@@ -63,10 +63,16 @@ object SGitParser {
         .text("Create a new branch")
         .children(
           arg[String]("<name>")
-            .required()
+            .optional()
             .maxOccurs(1)
             .action((x, c) => c.copy(name = x))
-            .text("name of the new branch\n")
+            .text("name of the new branch\n"),
+          opt[Unit]('a', name = "all")
+            .action((_, c) => c.copy(verbose = true))
+            .text("List all branches and tags\n"),
+          opt[Unit]('v', name = "verbose")
+            .action((_, c) => c.copy(verbose = true))
+            .text("List all branches and tags\n"),
         ),
 
       cmd(name = "log")
@@ -107,7 +113,7 @@ object SGitParser {
             else notSGitRepository()
 
           case "branch" =>
-            if (Repository.isInRepository(currentDirectory)) Branch.createNewBranch(repoPath.get, config.name)
+            if (Repository.isInRepository(currentDirectory)) Branch.branch(repoPath.get, config.verbose, config.name)
             else notSGitRepository()
 
           case "diff" =>

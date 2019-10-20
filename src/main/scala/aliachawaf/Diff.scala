@@ -2,9 +2,9 @@ package aliachawaf
 
 import java.io.File
 
-import aliachawaf.util.{CommitUtil, FileUtil, IndexUtil, ObjectUtil}
+import aliachawaf.util.{FileUtil, IndexUtil, ObjectUtil}
 
-import Console.{GREEN, RED, RESET}
+import scala.Console.{GREEN, RED, RESET}
 import scala.annotation.tailrec
 
 class FilesToDiff(val newFileContent: List[String], val oldFileContent: List[String], val filePath: String)

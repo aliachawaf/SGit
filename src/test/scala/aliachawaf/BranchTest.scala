@@ -93,7 +93,7 @@ class BranchTest extends FlatSpec with BeforeAndAfterEach {
     Branch.createNewBranch(repoPath, "branch2")
 
     Tag.tag(repoPath, "tag1")
-    println(Branch.branchAV(repoPath))
+    //println(Branch.branchAV(repoPath))
   }
 
 

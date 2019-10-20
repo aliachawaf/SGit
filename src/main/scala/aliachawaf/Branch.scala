@@ -3,8 +3,8 @@ package aliachawaf
 import java.io.File
 import java.io.File.separator
 
-import aliachawaf.util.{BranchTag, BranchUtil, CommitUtil, FileUtil, ResultUtil}
 import aliachawaf.util.ResultUtil.{branchNoMaster, branchResult}
+import aliachawaf.util.{BranchUtil, CommitUtil, FileUtil, ResultUtil}
 
 
 object Branch {

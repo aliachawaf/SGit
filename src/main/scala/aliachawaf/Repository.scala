@@ -2,7 +2,7 @@ package aliachawaf
 
 import java.io.File
 
-import util.{FileUtil, ResultUtil}
+import aliachawaf.util.{FileUtil, ResultUtil}
 
 import scala.annotation.tailrec
 

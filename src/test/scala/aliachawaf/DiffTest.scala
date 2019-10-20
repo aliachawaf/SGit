@@ -4,7 +4,6 @@ import java.io.File
 import java.io.File.separator
 
 import aliachawaf.util.FileUtil
-import aliachawaf.Diff._
 import org.scalatest.{BeforeAndAfterEach, FlatSpec}
 
 import scala.reflect.io.Directory
@@ -40,6 +39,8 @@ class DiffTest extends FlatSpec with BeforeAndAfterEach {
 
     val newFileContent = FileUtil.getFileContent(repoPath + separator + "testDir" + separator + "testFile2")
     val oldFileContent = FileUtil.getFileContent(repoPath + separator + "testDir" + separator + "testFile1")
+
+
 
   }
 

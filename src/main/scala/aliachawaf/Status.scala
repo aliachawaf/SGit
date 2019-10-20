@@ -3,11 +3,7 @@ package aliachawaf
 import java.io.File
 import java.nio.file.Paths
 
-import aliachawaf.Status.toRelativePaths
-import aliachawaf.util.{BranchUtil, CommitUtil, FileUtil, IndexUtil, ObjectUtil, ResultUtil}
-import aliachawaf.util.IndexUtil._
-
-import scala.reflect.io.Path
+import aliachawaf.util._
 
 object Status {
 

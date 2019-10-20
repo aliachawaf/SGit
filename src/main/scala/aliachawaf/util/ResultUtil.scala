@@ -4,9 +4,7 @@ import java.io.File
 
 import aliachawaf.{CommitToDiff, FilesToDiff}
 
-import Console.{GREEN, RED, RESET, YELLOW}
-import aliachawaf.Status.{get_Tracked_Committed_Modified, get_Tracked_Modified_NotAdded, get_Tracked_NeverCommitted, get_Untracked}
-
+import scala.Console.{GREEN, RED, RESET, YELLOW}
 import scala.annotation.tailrec
 
 object ResultUtil {

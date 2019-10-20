@@ -1,8 +1,10 @@
 package aliachawaf
 
 import java.io.File
+
 import aliachawaf.util.FileUtil
 import org.scalatest.{BeforeAndAfterEach, FlatSpec}
+
 import scala.reflect.io.Directory
 
 class RepositoryTest extends FlatSpec with BeforeAndAfterEach {
@@ -85,17 +87,4 @@ class RepositoryTest extends FlatSpec with BeforeAndAfterEach {
     assert(Repository.initialize(testDir) != "Already initialized SGit repository")
     assert(Repository.initialize(testDir) == "Already initialized SGit repository")
   }
-
-  // TODO
-  /*
-  it should "check if .sgit/INDEX file exists" in {
-    val currentDir = System.getProperty("user.dir")
-    val repoPath = Repository.getRepoPath(currentDir).get
-    assert(!Repository.hasIndexFile(repoPath))
-
-    FileUtil.createNewFile(repoPath + File.separator + ".sgit" + File.separator + "INDEX", "")
-    assert(Repository.hasIndexFile(repoPath))
-  }
-
-   */
 }

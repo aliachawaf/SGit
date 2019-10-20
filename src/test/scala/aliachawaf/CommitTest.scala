@@ -2,10 +2,10 @@ package aliachawaf
 
 import java.io.File
 
-import aliachawaf.util.{BranchUtil, FileUtil}
 import aliachawaf.Commit.commit
-import aliachawaf.util.CommitUtil._
 import aliachawaf.util.BranchUtil._
+import aliachawaf.util.CommitUtil._
+import aliachawaf.util.{BranchUtil, FileUtil, ObjectUtil}
 import org.scalatest.{BeforeAndAfterEach, FlatSpec}
 
 import scala.reflect.io.Directory
@@ -62,6 +62,26 @@ class CommitTest extends FlatSpec with BeforeAndAfterEach {
   }
 
   it should "create commit in .sgit/objects with the right content" in {
+
+    val currentDir = System.getProperty("user.dir")
+    val repoPath = Repository.getRepoPath(currentDir).get
+    val branch = BranchUtil.getCurrentBranch(repoPath)
+
+    commit(repoPath, "first commit")
+    val firstCommit = getLastCommit(repoPath, branch)
+    val firstCommitContent = ObjectUtil.getObjectContent(repoPath, firstCommit.get)
+
+    assert(firstCommitContent.length == 2)
+    assert(firstCommitContent.head.startsWith("tree "))
+    assert(firstCommitContent(1) == "message first commit")
+
+    Index.add(Seq("testDir/testFile2"), repoPath)
+    commit(repoPath, "second commit")
+    val secondCommit = getLastCommit(repoPath, branch)
+    val secondCommitContent = ObjectUtil.getObjectContent(repoPath, secondCommit.get)
+    assert(secondCommitContent.length == 3)
+    assert(secondCommitContent(1) == ("parent " + firstCommit.get))
+    assert(secondCommitContent(2) == "message second commit")
   }
 
   it should "create all trees of the commit tree in .sgit/objects" in {

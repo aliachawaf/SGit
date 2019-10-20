@@ -1,12 +1,6 @@
 package aliachawaf.util
 
 import java.io.{File, FileOutputStream}
-import java.math.BigInteger
-import java.nio.file.{Files, Paths, StandardCopyOption}
-import java.security.MessageDigest
-
-import scala.annotation.tailrec
-import scala.util.matching.Regex
 
 object FileUtil {
 

@@ -1,12 +1,7 @@
 package aliachawaf
 
-import java.io.File
-
-import aliachawaf.util.{BranchUtil, CommitUtil, FileUtil, ObjectUtil}
 import aliachawaf.util.ResultUtil.{logNotCommit, logResult}
-
-import Console.{RESET, YELLOW}
-import scala.annotation.tailrec
+import aliachawaf.util.{BranchUtil, CommitUtil, ObjectUtil}
 
 class CommitToDiff(val filesToDiff: List[FilesToDiff], val commitHash: String, val commitMsg: String)
 

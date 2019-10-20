@@ -1,7 +1,6 @@
 package aliachawaf
 
 import java.io.File
-import java.io.File.separator
 
 import aliachawaf.util.{BranchUtil, CommitUtil, FileUtil, ObjectUtil}
 import org.scalatest.{BeforeAndAfterEach, FlatSpec}
@@ -40,20 +39,16 @@ class LogTest extends FlatSpec with BeforeAndAfterEach {
     Commit.commit(repoPath, "first commit")
 
     val firstCommitHash = CommitUtil.getLastCommit(repoPath, currentBranch).get
-    val firstCommitContent = FileUtil.getFileContent(repoPath + separator + ".sgit" + separator + "objects" + separator + firstCommitHash) mkString "\n"
+    val firstCommitContent = ObjectUtil.getObjectContent(repoPath, firstCommitHash) mkString "\n"
 
     Index.add(Seq("testDir/testFile2"), repoPath)
     Commit.commit(repoPath, "second commit")
 
     val secondCommitHash = CommitUtil.getLastCommit(repoPath, currentBranch).get
-    val secondCommitContent = FileUtil.getFileContent(repoPath + separator + ".sgit" + separator + "objects" + separator + secondCommitHash) mkString "\n"
+    val secondCommitContent = ObjectUtil.getObjectContent(repoPath, secondCommitHash) mkString "\n"
 
     val logResult = Log.getCommitLog(repoPath, secondCommitHash)
     val expectedLogResult = List((firstCommitHash, firstCommitContent), (secondCommitHash, secondCommitContent))
-
-    val test = Log.logP(repoPath)
-    println(test)
-
     assert(logResult == expectedLogResult)
   }
 }

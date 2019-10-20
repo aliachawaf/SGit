@@ -4,8 +4,8 @@ import java.io.File
 import java.io.File.separator
 import java.nio.file.Paths
 
-import aliachawaf.util.{CommitUtil, FileUtil, IndexUtil, ObjectUtil}
 import aliachawaf.Status._
+import aliachawaf.util.{CommitUtil, FileUtil, IndexUtil}
 import org.scalatest.{BeforeAndAfterEach, FlatSpec}
 
 import scala.reflect.io.Directory
@@ -103,16 +103,22 @@ class StatusTest extends FlatSpec with BeforeAndAfterEach {
     val indexMap = IndexUtil.getIndexAsMap(repoPath)
 
     val files = get_Tracked_NeverCommitted(commitTree, indexMap, testDir2, repoPath)
+
     assert(files.length == 1)
     assert(files.head == file1RelativePath)
 
     Commit.commit(repoPath, "commit testFile1")
 
+
     val lastCommitTree2 = CommitUtil.getLastCommitTree(repoPath)
     val commitTree2 = CommitUtil.getCommitAsMap(repoPath, lastCommitTree2)
     val indexMap2 = IndexUtil.getIndexAsMap(repoPath)
 
+    println(commitTree2)
+    println(indexMap2)
+
     val filesAfterCommit = get_Tracked_NeverCommitted(commitTree2, indexMap2, testDir2, repoPath)
+
     assert(filesAfterCommit.isEmpty)
   }
 
@@ -180,8 +186,6 @@ class StatusTest extends FlatSpec with BeforeAndAfterEach {
     val file1AbsolutePath = repoPath + separator + "testDir" + separator + "testFile1"
     val file1RelativePath = Paths.get(testDir2).relativize(Paths.get(file1AbsolutePath)).toString
 
-    FileUtil.createNewFile(repoPath + separator + ".sgit" + separator + "INDEX", "")
-
     val indexMap = IndexUtil.getIndexAsMap(repoPath)
     val lastCommitTree = CommitUtil.getLastCommitTree(repoPath)
     val commitTree = CommitUtil.getCommitAsMap(repoPath, lastCommitTree)
@@ -189,7 +193,8 @@ class StatusTest extends FlatSpec with BeforeAndAfterEach {
     val files = get_Deleted_NotCommitted(commitTree, indexMap, testDir2, repoPath)
     assert(files.isEmpty)
 
-    Commit.commit(repoPath, "commit")
+    Commit.commit(repoPath, "commit1")
+    FileUtil.createNewFile(repoPath + separator + ".sgit" + separator + "INDEX", "")
 
     val indexMap2 = IndexUtil.getIndexAsMap(repoPath)
     val lastCommitTree2 = CommitUtil.getLastCommitTree(repoPath)
@@ -199,8 +204,8 @@ class StatusTest extends FlatSpec with BeforeAndAfterEach {
     assert(filesAfterCommit.length == 1)
     assert(filesAfterCommit.head == file1RelativePath)
 
-/*
-    Index.add(Seq(repoPath + separator + "testFile1"), repoPath)
+    /*Index.add(Seq(repoPath + separator + "testFile1"), repoPath)
+    Commit.commit(repoPath, "commit2")
 
     val indexMap3 = IndexUtil.getIndexAsMap(repoPath)
     val lastCommitTree3 = CommitUtil.getLastCommitTree(repoPath)

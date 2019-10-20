@@ -1,9 +1,7 @@
 package aliachawaf.parser
 
-import java.io.File
-
 import aliachawaf.util.ResultUtil._
-import aliachawaf.{Branch, Commit, Diff, Index, Log, Repository, Status, Tag}
+import aliachawaf._
 import scopt.OParser
 
 object SGitParser {

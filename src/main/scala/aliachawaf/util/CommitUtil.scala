@@ -3,8 +3,6 @@ package aliachawaf.util
 import java.io.File
 import java.io.File.separator
 
-import scala.annotation.tailrec
-
 object CommitUtil {
 
   /**
